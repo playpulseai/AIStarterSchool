@@ -34,9 +34,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
   
-  if (!user) {
-    return <Login />;
-  }
+  // Bypass authentication check - allow access to all routes
+  // if (!user) {
+  //   return <Login />;
+  // }
   
   return <>{children}</>;
 }

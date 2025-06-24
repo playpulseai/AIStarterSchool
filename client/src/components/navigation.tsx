@@ -48,30 +48,22 @@ export function Navigation() {
               Gallery
             </Link>
             
-            {user ? (
-              <>
-                <Link href="/dashboard" className={isActive('/dashboard') ? 'nav-link-active' : 'nav-link'}>
-                  Dashboard
-                </Link>
-                <Link href="/curriculum" className={isActive('/curriculum') ? 'nav-link-active' : 'nav-link'}>
-                  Curriculum
-                </Link>
-                <Button onClick={handleLogout} variant="outline" size="sm">
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className={isActive('/login') ? 'nav-link-active' : 'nav-link'}>
-                  Login
-                </Link>
-                <Link href="/signup">
-                  <Button className="bg-primary hover:bg-primary/90 text-white font-medium">
-                    Get Started
-                  </Button>
-                </Link>
-              </>
-            )}
+            {/* Show all links regardless of authentication status */}
+            <Link href="/dashboard" className={isActive('/dashboard') ? 'nav-link-active' : 'nav-link'}>
+              Dashboard
+            </Link>
+            <Link href="/curriculum" className={isActive('/curriculum') ? 'nav-link-active' : 'nav-link'}>
+              Curriculum
+            </Link>
+            <Link href="/lessons" className={isActive('/lessons') ? 'nav-link-active' : 'nav-link'}>
+              Lessons
+            </Link>
+            <Link href="/projects" className={isActive('/projects') ? 'nav-link-active' : 'nav-link'}>
+              Projects
+            </Link>
+            <Link href="/admin" className={isActive('/admin') ? 'nav-link-active' : 'nav-link'}>
+              Admin
+            </Link>
           </div>
           
           <button 
