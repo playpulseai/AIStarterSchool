@@ -350,6 +350,43 @@ export default function Admin() {
     });
   };
 
+  const approvePublication = async (requestId: string) => {
+    setPublicationRequests(prev => prev.map(req =>
+      req.id === requestId
+        ? {
+            ...req,
+            status: 'approved' as const,
+            reviewedBy: user?.email || 'admin',
+            reviewedAt: new Date()
+          }
+        : req
+    ));
+
+    toast({
+      title: "Publication Approved",
+      description: "Project has been approved and will appear in the public gallery.",
+    });
+  };
+
+  const rejectPublication = async (requestId: string, reason: string) => {
+    setPublicationRequests(prev => prev.map(req =>
+      req.id === requestId
+        ? {
+            ...req,
+            status: 'rejected' as const,
+            reviewedBy: user?.email || 'admin',
+            reviewedAt: new Date(),
+            rejectionReason: reason
+          }
+        : req
+    ));
+
+    toast({
+      title: "Publication Rejected",
+      description: "Project has been rejected and will not appear in the gallery.",
+    });
+  };
+
   const getFilteredSessions = () => {
     let filtered = sessionLogs;
 
