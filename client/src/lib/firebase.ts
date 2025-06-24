@@ -22,41 +22,18 @@ try {
   if (hasValidCredentials) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    console.log("Firebase initialized successfully");
+    console.log("Firebase initialized with real credentials");
   } else {
-    // Initialize with demo config that won't cause API errors
-    const demoConfig = {
-      apiKey: "demo-key-bypass",
-      authDomain: "demo.firebaseapp.com", 
-      projectId: "demo-project",
-      storageBucket: "demo-project.appspot.com",
-      appId: "1:123456789:web:demo"
-    };
-    
-    console.log("Initializing Firebase in demo mode");
-    app = initializeApp(demoConfig);
-    auth = getAuth(app);
-    
-    // Connect to auth emulator in demo mode to avoid real API calls
-    if (typeof window !== 'undefined' && !auth._authDomain.includes('localhost')) {
-      try {
-        connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
-      } catch (e) {
-        // Emulator connection failed, continue in demo mode
-        console.log("Running in demo mode without emulator");
-      }
-    }
+    console.log("Bypassing Firebase completely - running in demo mode");
+    // Don't initialize Firebase at all in demo mode
+    app = null;
+    auth = null;
   }
 } catch (error) {
   console.error("Firebase initialization failed:", error);
-  // Create minimal working firebase instance
-  const fallbackConfig = {
-    apiKey: "fallback-key",
-    authDomain: "fallback.firebaseapp.com",
-    projectId: "fallback-project"
-  };
-  app = initializeApp(fallbackConfig);
-  auth = getAuth(app);
+  console.log("Running in complete bypass mode");
+  app = null;
+  auth = null;
 }
 
 export { auth };

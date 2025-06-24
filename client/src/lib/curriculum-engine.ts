@@ -4,7 +4,8 @@ import { apiRequest } from './queryClient';
 import { SessionLogger, getUserId } from './safety-agents';
 import { SmartMemory } from './smart-memory';
 
-const db = getFirestore(app);
+// Handle null app for bypass mode
+const db = app ? getFirestore(app) : null;
 
 export interface CurriculumTopic {
   id: string;
