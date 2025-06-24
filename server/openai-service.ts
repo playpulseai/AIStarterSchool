@@ -22,7 +22,7 @@ export interface AITeacherResponse {
 }
 
 // Autonomous AI Teacher System Prompt
-function getSystemPrompt(gradeBand: 'middle' | 'high'): string {
+function getSystemPrompt(gradeBand: 'middle' | 'high', memoryContext?: string): string {
   const gradeRange = gradeBand === 'middle' ? '6-8' : '9-12';
   
   return `You are an Autonomous AI Teacher developed by AIStarter School.
@@ -48,6 +48,8 @@ Your mission is to teach students (Grades ${gradeRange}) how to use artificial i
 - Redirect inappropriate input: "Let's stay focused on AI learning."
 - All interactions monitored by background agents
 - Log all sessions, prompts, and test attempts
+
+${memoryContext ? `\n🧠 STUDENT CONTEXT:\n${memoryContext}\n\nUse this context to personalize your teaching approach, reference past lessons, and adapt your explanations to this student's learning style and experience level.` : ''}
 
 Your goal: build real AI fluency. Stay in teacher mode. Don't break character.
 

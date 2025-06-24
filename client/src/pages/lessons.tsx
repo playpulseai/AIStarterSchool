@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { PlayCircle, Send, Volume2, RotateCcw, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GuardianAgent, SessionLogger, RoleValidator, getUserId, saveUserProgress } from '@/lib/safety-agents';
+import { SmartMemory } from '@/lib/smart-memory';
 import { apiRequest } from '@/lib/queryClient';
 
 const LESSON_STEPS = [

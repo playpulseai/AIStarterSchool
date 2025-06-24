@@ -1,6 +1,8 @@
 import { getFirestore, collection, addDoc, updateDoc, doc, getDoc, getDocs, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
 import app from './firebase';
 import { apiRequest } from './queryClient';
+import { SessionLogger, getUserId } from './safety-agents';
+import { SmartMemory } from './smart-memory';
 
 const db = getFirestore(app);
 
