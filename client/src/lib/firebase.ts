@@ -15,9 +15,14 @@ let auth;
 
 try {
   // Check if we have valid credentials
-  const hasValidCredentials = import.meta.env.VITE_FIREBASE_API_KEY && 
+  const hasValidCredentials = 
+    import.meta.env.VITE_FIREBASE_API_KEY && 
+    import.meta.env.VITE_FIREBASE_PROJECT_ID &&
+    import.meta.env.VITE_FIREBASE_APP_ID &&
     import.meta.env.VITE_FIREBASE_API_KEY !== "demo-key" &&
-    import.meta.env.VITE_FIREBASE_API_KEY.startsWith("AIza");
+    import.meta.env.VITE_FIREBASE_API_KEY.startsWith("AIza") &&
+    import.meta.env.VITE_FIREBASE_PROJECT_ID.length > 0 &&
+    import.meta.env.VITE_FIREBASE_APP_ID.includes(":");
 
   if (hasValidCredentials) {
     app = initializeApp(firebaseConfig);
