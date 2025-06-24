@@ -8,8 +8,8 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if we're in demo mode
-    if (import.meta.env.VITE_FIREBASE_API_KEY === "demo-key") {
+    // Check if we're in demo mode (no valid Firebase credentials)
+    if (!auth) {
       setLoading(false);
       return;
     }
@@ -27,8 +27,8 @@ export function useAuth() {
       setError(null);
       setLoading(true);
       
-      // Temporary demo mode fallback if Firebase credentials are not configured
-      if (import.meta.env.VITE_FIREBASE_API_KEY === "demo-key") {
+      // Demo mode fallback if Firebase credentials are not configured
+      if (!auth) {
         // Create a mock user object for demo purposes
         const mockUser = {
           uid: 'demo-user-' + Date.now(),
@@ -59,8 +59,8 @@ export function useAuth() {
       setError(null);
       setLoading(true);
       
-      // Temporary demo mode fallback if Firebase credentials are not configured
-      if (import.meta.env.VITE_FIREBASE_API_KEY === "demo-key") {
+      // Demo mode fallback if Firebase credentials are not configured
+      if (!auth) {
         // Create a mock user object for demo purposes
         const mockUser = {
           uid: 'demo-user-' + Date.now(),

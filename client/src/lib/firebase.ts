@@ -13,17 +13,26 @@ const firebaseConfig = {
 let app;
 let auth;
 
+// Check if we have valid Firebase credentials
+const hasValidCredentials = import.meta.env.VITE_FIREBASE_API_KEY && 
+  import.meta.env.VITE_FIREBASE_API_KEY !== "demo-key" &&
+  import.meta.env.VITE_FIREBASE_PROJECT_ID && 
+  import.meta.env.VITE_FIREBASE_PROJECT_ID !== "demo-project" &&
+  import.meta.env.VITE_FIREBASE_APP_ID && 
+  import.meta.env.VITE_FIREBASE_APP_ID !== "demo-app-id";
+
 try {
-  if (import.meta.env.VITE_FIREBASE_API_KEY === "demo-key") {
-    console.log("Running in demo mode - Firebase authentication disabled");
-    // Create a minimal auth object for demo mode
+  if (!hasValidCredentials) {
+    console.log("🔄 Running in demo mode - provide Firebase credentials to enable full authentication");
     auth = null;
   } else {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
+    console.log("🔥 Firebase initialized successfully");
   }
 } catch (error) {
   console.error("Firebase initialization error:", error);
+  console.log("🔄 Falling back to demo mode");
   auth = null;
 }
 
