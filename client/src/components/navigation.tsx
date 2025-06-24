@@ -50,8 +50,8 @@ export function Navigation() {
                 <Link href="/dashboard" className={isActive('/dashboard') ? 'nav-link-active' : 'nav-link'}>
                   Dashboard
                 </Link>
-                <Link href="/lessons" className={isActive('/lessons') ? 'nav-link-active' : 'nav-link'}>
-                  Lessons
+                <Link href="/curriculum" className={isActive('/curriculum') ? 'nav-link-active' : 'nav-link'}>
+                  Curriculum
                 </Link>
                 <Button onClick={handleLogout} variant="outline" size="sm">
                   Logout
@@ -102,8 +102,8 @@ export function Navigation() {
                   <Link href="/dashboard" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
                     Dashboard
                   </Link>
-                  <Link href="/lessons" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                    Lessons
+                  <Link href="/curriculum" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
+                    Curriculum
                   </Link>
                   <Link href="/test" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
                     Test

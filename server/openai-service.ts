@@ -134,3 +134,134 @@ export async function generateLessonContent(gradeBand: 'middle' | 'high', lesson
     return `Welcome to our lesson on ${topic}! Let's explore this fascinating topic together.`;
   }
 }
+
+export async function generateCurriculumLesson(topicId: string, topicTitle: string, stepNumber: number, gradeBand: 'middle' | 'high', totalSteps: number): Promise<{
+  title: string;
+  description: string;
+  task: string;
+  promptSuggestion: string;
+}> {
+  const gradeRange = gradeBand === 'middle' ? '6-8' : '9-12';
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert curriculum designer creating AI education content for grades ${gradeRange}. 
+          Create structured, progressive lessons that build upon each other.
+          
+          Response format (JSON):
+          {
+            "title": "Lesson title",
+            "description": "Brief lesson description",
+            "task": "Specific task for students to complete",
+            "promptSuggestion": "Example AI prompt for students to try"
+          }`
+        },
+        {
+          role: 'user',
+          content: `Create lesson ${stepNumber} of ${totalSteps} for the topic "${topicTitle}".
+          
+          Topic: ${topicTitle}
+          Step: ${stepNumber}/${totalSteps}
+          Grade level: ${gradeRange}
+          
+          Make this lesson progressive - building on previous lessons if step > 1.
+          Include a hands-on task and a practical prompt example.
+          Keep language appropriate for grades ${gradeRange}.`
+        }
+      ],
+      max_tokens: 400,
+      temperature: 0.7,
+      response_format: { type: "json_object" }
+    });
+
+    const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
+    
+    return {
+      title: result.title || `${topicTitle} - Lesson ${stepNumber}`,
+      description: result.description || `Learn about ${topicTitle.toLowerCase()}`,
+      task: result.task || `Complete the interactive lesson on ${topicTitle.toLowerCase()}`,
+      promptSuggestion: result.promptSuggestion || 'Try creating a prompt related to this lesson topic'
+    };
+  } catch (error) {
+    console.error('Failed to generate curriculum lesson:', error);
+    return {
+      title: `${topicTitle} - Lesson ${stepNumber}`,
+      description: `Learn about ${topicTitle.toLowerCase()}`,
+      task: `Complete the interactive lesson on ${topicTitle.toLowerCase()}`,
+      promptSuggestion: 'Try creating a prompt related to this lesson topic'
+    };
+  }
+}
+
+export async function generateTest(topicId: string, gradeBand: 'middle' | 'high', questionCount: number): Promise<{ questions: any[] }> {
+  const gradeRange = gradeBand === 'middle' ? '6-8' : '9-12';
+  
+  const topicTitles: Record<string, string> = {
+    'prompting-basics': 'Prompting Basics',
+    'ai-art': 'AI Art Creation',
+    'ai-for-school': 'AI for School',
+    'automation': 'AI Automation',
+    'ethics': 'AI Ethics'
+  };
+
+  const topicTitle = topicTitles[topicId] || 'AI Fundamentals';
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert test creator for AI education. Create ${questionCount} multiple choice questions for grades ${gradeRange}.
+          
+          Each question should test practical understanding, not memorization.
+          Include real-world scenarios and applications.
+          
+          Response format (JSON):
+          {
+            "questions": [
+              {
+                "id": "unique_id",
+                "question": "Question text",
+                "type": "multiple_choice",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "correctAnswer": 0,
+                "explanation": "Why this answer is correct"
+              }
+            ]
+          }`
+        },
+        {
+          role: 'user',
+          content: `Create ${questionCount} test questions for "${topicTitle}" suitable for grades ${gradeRange}.
+          
+          Focus on practical application and understanding.
+          Make questions relevant to real-world AI usage.
+          Ensure explanations help students learn from mistakes.`
+        }
+      ],
+      max_tokens: 800,
+      temperature: 0.6,
+      response_format: { type: "json_object" }
+    });
+
+    const result = JSON.parse(completion.choices[0]?.message?.content || '{"questions": []}');
+    
+    // Add topicId and gradeBand to each question
+    const questions = result.questions.map((q: any, index: number) => ({
+      ...q,
+      id: q.id || `${topicId}-q${index + 1}`,
+      topicId,
+      gradeBand: 'both'
+    }));
+
+    return { questions };
+  } catch (error) {
+    console.error('Failed to generate test:', error);
+    return { questions: [] };
+  }
+}
