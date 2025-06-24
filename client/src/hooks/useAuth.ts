@@ -89,6 +89,13 @@ export function useAuth() {
   const logout = async () => {
     try {
       setError(null);
+      
+      // Demo mode - just clear the user
+      if (!auth) {
+        setUser(null);
+        return;
+      }
+      
       await signOut(auth);
     } catch (error: any) {
       setError(error.message);
