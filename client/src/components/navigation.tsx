@@ -44,6 +44,9 @@ export function Navigation() {
             <Link href="/features" className={isActive('/features') ? 'nav-link-active' : 'nav-link'}>
               Features
             </Link>
+            <Link href="/gallery" className={isActive('/gallery') ? 'nav-link-active' : 'nav-link'}>
+              Gallery
+            </Link>
             
             {user ? (
               <>
@@ -95,6 +98,9 @@ export function Navigation() {
               </Link>
               <Link href="/features" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
                 Features
+              </Link>
+              <Link href="/gallery" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
+                Gallery
               </Link>
               
               {user ? (

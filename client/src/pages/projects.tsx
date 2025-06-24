@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, FolderOpen, Eye, Edit, Trash2, Calendar, User, Heart, Download, Copy, FileText, Trophy, Star } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Plus, FolderOpen, Eye, Edit, Trash2, Calendar, User, Heart, Download, Copy, FileText, Trophy, Star, Globe, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SessionLogger, getUserId } from '@/lib/safety-agents';
 import { ProgressTracker, CURRICULUM_TOPICS } from '@/lib/curriculum-engine';
@@ -24,6 +25,10 @@ interface Project {
   updatedAt: Date;
   content: string;
   tags: string[];
+  isPublic?: boolean;
+  publishedAt?: Date;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  studentAlias?: string;
 }
 
 interface AIGeneration {
@@ -171,6 +176,9 @@ export default function Projects() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isGenerationDialogOpen, setIsGenerationDialogOpen] = useState(false);
+  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [projectToPublish, setProjectToPublish] = useState<Project | null>(null);
+  const [studentAlias, setStudentAlias] = useState('');
   const [activeTab, setActiveTab] = useState('projects');
   const [newProject, setNewProject] = useState({
     title: '',
@@ -357,6 +365,55 @@ Generated with AIStarter School`;
     toast({
       title: "Exported",
       description: "AI generation exported successfully.",
+    });
+  };
+
+  const initiatePublish = (project: Project) => {
+    setProjectToPublish(project);
+    setStudentAlias('');
+    setIsPublishDialogOpen(true);
+  };
+
+  const publishProject = async () => {
+    if (!projectToPublish || !studentAlias.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please provide a display alias for your project.",
+      });
+      return;
+    }
+
+    const userId = getUserId();
+    await SessionLogger.logSession({
+      userId,
+      gradeBand: 'middle',
+      lessonStep: 0,
+      action: 'prompt_submit',
+      content: `Published project: ${projectToPublish.title} with alias: ${studentAlias}`,
+      timestamp: new Date()
+    });
+
+    // Update project to published status
+    setProjects(prev => prev.map(project =>
+      project.id === projectToPublish.id
+        ? {
+            ...project,
+            isPublic: true,
+            publishedAt: new Date(),
+            approvalStatus: 'pending' as const,
+            studentAlias: studentAlias.trim(),
+            status: 'published' as const
+          }
+        : project
+    ));
+
+    setIsPublishDialogOpen(false);
+    setProjectToPublish(null);
+
+    toast({
+      title: "Project Submitted",
+      description: "Your project has been submitted for review. It will appear in the public gallery once approved by our moderators.",
     });
   };
 
@@ -589,6 +646,18 @@ Generated with AIStarter School`;
                         </SelectContent>
                       </Select>
                       
+                      {project.status === 'completed' && !project.isPublic && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => initiatePublish(project)}
+                          className="mr-2"
+                        >
+                          <Globe className="h-3 w-3 mr-1" />
+                          Publish
+                        </Button>
+                      )}
+                      
                       <Button
                         variant="outline"
                         size="sm"
@@ -622,6 +691,22 @@ Generated with AIStarter School`;
                       <div className="flex items-center space-x-2 mt-1">
                         {getStatusBadge(selectedProject.status)}
                         <Badge variant="outline">{PROJECT_TYPES[selectedProject.type].label}</Badge>
+                        {selectedProject.isPublic && (
+                          <Badge variant="default" className="bg-green-500">
+                            <Globe className="h-3 w-3 mr-1" />
+                            Public
+                          </Badge>
+                        )}
+                        {selectedProject.approvalStatus && (
+                          <Badge variant={
+                            selectedProject.approvalStatus === 'approved' ? 'default' :
+                            selectedProject.approvalStatus === 'pending' ? 'secondary' : 'destructive'
+                          }>
+                            {selectedProject.approvalStatus === 'approved' && <CheckCircle className="h-3 w-3 mr-1" />}
+                            {selectedProject.approvalStatus === 'pending' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                            {selectedProject.approvalStatus}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -660,6 +745,18 @@ Generated with AIStarter School`;
                       <span className="font-medium">Last Updated:</span>
                       <p className="text-gray-600 dark:text-gray-400">{selectedProject.updatedAt.toLocaleDateString()}</p>
                     </div>
+                    {selectedProject.publishedAt && (
+                      <div>
+                        <span className="font-medium">Published:</span>
+                        <p className="text-gray-600 dark:text-gray-400">{selectedProject.publishedAt.toLocaleDateString()}</p>
+                      </div>
+                    )}
+                    {selectedProject.studentAlias && (
+                      <div>
+                        <span className="font-medium">Public Alias:</span>
+                        <p className="text-gray-600 dark:text-gray-400">{selectedProject.studentAlias}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
@@ -779,6 +876,69 @@ Generated with AIStarter School`;
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Export
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Publish Project Dialog */}
+        <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            {projectToPublish && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center space-x-2">
+                    <Globe className="h-5 w-5 text-primary" />
+                    <span>Publish to Gallery</span>
+                  </DialogTitle>
+                  <DialogDescription>
+                    Share your project "{projectToPublish.title}" with the public gallery
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Important:</strong> Your project will be reviewed by moderators before appearing publicly. 
+                      Only your chosen display name will be visible - your real name stays private.
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <div>
+                    <Label htmlFor="student-alias">Display Name (Public Alias)</Label>
+                    <Input
+                      id="student-alias"
+                      placeholder="e.g., TechExplorer, CodeWiz, ArtMaster..."
+                      value={studentAlias}
+                      onChange={(e) => setStudentAlias(e.target.value)}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      This name will be shown publicly instead of your real name
+                    </p>
+                  </div>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">What happens next?</h4>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• Your project will be submitted for moderation review</li>
+                      <li>• If approved, it will appear in the public gallery</li>
+                      <li>• Other students can view and like your project</li>
+                      <li>• You can unpublish it anytime from your portfolio</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button onClick={publishProject} className="flex-1" disabled={!studentAlias.trim()}>
+                      <Globe className="mr-2 h-4 w-4" />
+                      Publish Project
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsPublishDialogOpen(false)}>
+                      Cancel
                     </Button>
                   </div>
                 </div>

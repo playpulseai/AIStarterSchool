@@ -76,6 +76,20 @@ interface BadgeHistory {
   overrideBy?: string;
 }
 
+interface PublicationRequest {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  studentAlias: string;
+  userId: string;
+  content: string;
+  submittedAt: Date;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  rejectionReason?: string;
+}
+
 export default function Admin() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -88,6 +102,7 @@ export default function Admin() {
   const [flaggedContent, setFlaggedContent] = useState<FlaggedContent[]>([]);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [badgeHistory, setBadgeHistory] = useState<BadgeHistory[]>([]);
+  const [publicationRequests, setPublicationRequests] = useState<PublicationRequest[]>([]);
 
   // Filter states
   const [sessionFilter, setSessionFilter] = useState('');
@@ -229,6 +244,31 @@ export default function Admin() {
           topicTitle: 'AI Art Creation',
           earnedDate: new Date('2024-01-15T11:30:00'),
           testScore: 92
+        }
+      ]);
+
+      setPublicationRequests([
+        {
+          id: 'pub-req-1',
+          projectId: 'proj-1',
+          projectTitle: 'Smart Study Assistant',
+          studentAlias: 'StudyBuddy',
+          userId: 'user-123',
+          content: 'An AI chatbot that helps students with homework by providing step-by-step explanations...',
+          submittedAt: new Date('2024-01-20T10:30:00'),
+          status: 'pending'
+        },
+        {
+          id: 'pub-req-2',
+          projectId: 'proj-2',
+          projectTitle: 'Creative Writing Generator',
+          studentAlias: 'WordWizard',
+          userId: 'user-456',
+          content: 'AI-powered tool for generating creative story prompts and character development...',
+          submittedAt: new Date('2024-01-19T14:15:00'),
+          status: 'approved',
+          reviewedBy: 'admin@aistarter.school',
+          reviewedAt: new Date('2024-01-19T16:30:00')
         }
       ]);
 
@@ -462,11 +502,12 @@ export default function Admin() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="sessions">Session Logs</TabsTrigger>
             <TabsTrigger value="flags">Flagged Content</TabsTrigger>
             <TabsTrigger value="tests">Test Results</TabsTrigger>
             <TabsTrigger value="badges">Badge History</TabsTrigger>
+            <TabsTrigger value="publications">Publications</TabsTrigger>
           </TabsList>
 
           {/* Session Logs Tab */}
@@ -714,6 +755,97 @@ export default function Admin() {
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-success">{badge.testScore}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Publication Requests Tab */}
+          <TabsContent value="publications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Publication Requests</CardTitle>
+                    <CardDescription>Review and approve student projects for the public gallery</CardDescription>
+                  </div>
+                  <Button onClick={() => exportToCSV(publicationRequests, 'publication-requests')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {publicationRequests.map((request) => (
+                    <div key={request.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center space-x-2">
+                            <Badge variant={
+                              request.status === 'approved' ? 'default' :
+                              request.status === 'pending' ? 'secondary' : 'destructive'
+                            }>
+                              {request.status}
+                            </Badge>
+                            <span className="font-semibold">{request.projectTitle}</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              by {request.studentAlias}
+                            </span>
+                          </div>
+                          
+                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border">
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {request.content.length > 200 
+                                ? `${request.content.substring(0, 200)}...` 
+                                : request.content}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <span>Submitted {request.submittedAt.toLocaleString()}</span>
+                            {request.reviewedBy && (
+                              <span>Reviewed by {request.reviewedBy} at {request.reviewedAt?.toLocaleString()}</span>
+                            )}
+                          </div>
+                          
+                          {request.rejectionReason && (
+                            <div className="bg-red-50 dark:bg-red-950/20 p-2 rounded border border-red-200 dark:border-red-800">
+                              <p className="text-sm text-red-700 dark:text-red-300">
+                                <strong>Rejection reason:</strong> {request.rejectionReason}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex space-x-2 ml-4">
+                          {request.status === 'pending' && (
+                            <>
+                              <Button 
+                                size="sm" 
+                                onClick={() => approvePublication(request.id)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => rejectPublication(request.id, 'Content does not meet guidelines')}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </div>

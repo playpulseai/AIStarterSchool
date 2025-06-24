@@ -20,6 +20,7 @@ import Projects from "@/pages/projects";
 import Profile from "@/pages/profile";
 import Curriculum from "@/pages/curriculum";
 import Admin from "@/pages/admin";
+import Gallery from "@/pages/gallery";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -86,6 +87,7 @@ function Router() {
               <Admin />
             </ProtectedRoute>
           </Route>
+          <Route path="/gallery" component={Gallery} />
           <Route component={NotFound} />
         </Switch>
       </main>
