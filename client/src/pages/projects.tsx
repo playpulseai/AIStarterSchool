@@ -180,6 +180,7 @@ export default function Projects() {
   const [projectToPublish, setProjectToPublish] = useState<Project | null>(null);
   const [studentAlias, setStudentAlias] = useState('');
   const [activeTab, setActiveTab] = useState('projects');
+  const [memoryFeedback, setMemoryFeedback] = useState<string>('');
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',

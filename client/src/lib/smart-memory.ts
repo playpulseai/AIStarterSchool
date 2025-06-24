@@ -155,13 +155,75 @@ export class SmartMemory {
 
       currentMemory.lastActivityDate = new Date();
 
-      // Save to localStorage (in real app, would save to Firebase)
+      // Save to localStorage (in real app, would save to Firebase under student_memory/{userId})
       localStorage.setItem(`student_memory_${actualUserId}`, JSON.stringify(currentMemory));
       
       console.log('Student memory updated:', currentMemory);
     } catch (error) {
       console.error('Failed to update student memory:', error);
     }
+  }
+
+  static async logProjectCreation(projectType: string, hasExamples: boolean, userId?: string): Promise<void> {
+    const actualUserId = userId || getUserId();
+    const memory = await this.getStudentMemory(actualUserId);
+    
+    // Check if this project shows improvement in a weak area
+    if (memory.weaknessAreas.includes(projectType)) {
+      // Remove from weakness areas if they're now working on it
+      memory.weaknessAreas = memory.weaknessAreas.filter(area => area !== projectType);
+      
+      // Potentially add to strength areas if consistent improvement
+      if (!memory.strengthAreas.includes(projectType)) {
+        memory.strengthAreas.push(projectType);
+      }
+    }
+    
+    await this.updateStudentMemory({
+      interactionData: {
+        askedForExamples: hasExamples,
+        neededEncouragement: false,
+        usedVaguePrompts: false,
+        responseTime: 0
+      }
+    }, actualUserId);
+  }
+
+  static async analyzeProjectImprovement(projects: any[], userId?: string): Promise<string> {
+    const memory = await this.getStudentMemory(userId);
+    const recentProjects = projects.slice(-3); // Last 3 projects
+    
+    let feedback = '';
+    
+    // Check for improvement patterns
+    const projectTypes = recentProjects.map(p => p.type);
+    const weakAreas = memory.weaknessAreas;
+    
+    // Check if student is working on weak areas
+    const workingOnWeakness = projectTypes.some(type => weakAreas.includes(type));
+    if (workingOnWeakness) {
+      feedback += "Great to see you tackling areas that need more practice! ";
+    }
+    
+    // Check for consistency in strong areas
+    const strongAreas = memory.strengthAreas;
+    const workingOnStrengths = projectTypes.some(type => strongAreas.includes(type));
+    if (workingOnStrengths) {
+      feedback += "You're building on your strengths - excellent strategy! ";
+    }
+    
+    // Check project completion rate
+    const completedProjects = projects.filter(p => p.status === 'completed').length;
+    const totalProjects = projects.length;
+    const completionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
+    
+    if (completionRate > 80) {
+      feedback += "Your high project completion rate shows great dedication! ";
+    } else if (completionRate < 50) {
+      feedback += "Try finishing more projects to build momentum in your learning. ";
+    }
+    
+    return feedback || "Keep creating and experimenting with AI!";
   }
 
   static generateSystemPromptInjection(memory: StudentMemory): string {
