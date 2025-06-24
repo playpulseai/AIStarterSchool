@@ -90,6 +90,27 @@ interface PublicationRequest {
   rejectionReason?: string;
 }
 
+interface StudentMemoryInsight {
+  id: string;
+  userId: string;
+  userName?: string;
+  email?: string;
+  lastLessonTopic?: string;
+  missedTestConcepts: string[];
+  promptMistakePatterns: string[];
+  preferredLearningStyle: string;
+  identifiedStrengths: string[];
+  weaknessAreas: string[];
+  totalLessonsCompleted: number;
+  averageTestScore: number;
+  lastActivity: Date;
+  interactionPatterns: {
+    asksForExamples: boolean;
+    needsEncouragement: boolean;
+    prefersStepByStep: boolean;
+  };
+}
+
 export default function Admin() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -103,6 +124,7 @@ export default function Admin() {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [badgeHistory, setBadgeHistory] = useState<BadgeHistory[]>([]);
   const [publicationRequests, setPublicationRequests] = useState<PublicationRequest[]>([]);
+  const [studentMemoryInsights, setStudentMemoryInsights] = useState<StudentMemoryInsight[]>([]);
 
   // Filter states
   const [sessionFilter, setSessionFilter] = useState('');
@@ -269,6 +291,69 @@ export default function Admin() {
           status: 'approved',
           reviewedBy: 'admin@aistarter.school',
           reviewedAt: new Date('2024-01-19T16:30:00')
+        }
+      ]);
+
+      setStudentMemoryInsights([
+        {
+          id: 'mem-1',
+          userId: 'user-123',
+          userName: 'alex.student',
+          email: 'alex.student@school.edu',
+          lastLessonTopic: 'Prompting Basics',
+          missedTestConcepts: ['Complex prompting', 'Context management'],
+          promptMistakePatterns: ['Uses vague prompts', 'Forgets examples'],
+          preferredLearningStyle: 'visual',
+          identifiedStrengths: ['Creative writing', 'AI art prompts'],
+          weaknessAreas: ['Technical concepts'],
+          totalLessonsCompleted: 8,
+          averageTestScore: 78,
+          lastActivity: new Date('2024-01-20T14:30:00'),
+          interactionPatterns: {
+            asksForExamples: true,
+            needsEncouragement: false,
+            prefersStepByStep: true
+          }
+        },
+        {
+          id: 'mem-2',
+          userId: 'user-456',
+          userName: 'sarah.learner',
+          email: 'sarah.learner@school.edu',
+          lastLessonTopic: 'AI Ethics',
+          missedTestConcepts: ['Bias detection'],
+          promptMistakePatterns: [],
+          preferredLearningStyle: 'text',
+          identifiedStrengths: ['Ethical reasoning', 'Critical thinking'],
+          weaknessAreas: ['Image generation'],
+          totalLessonsCompleted: 15,
+          averageTestScore: 92,
+          lastActivity: new Date('2024-01-21T10:15:00'),
+          interactionPatterns: {
+            asksForExamples: false,
+            needsEncouragement: false,
+            prefersStepByStep: false
+          }
+        },
+        {
+          id: 'mem-3',
+          userId: 'user-789',
+          userName: 'mike.coder',
+          email: 'mike.coder@school.edu',
+          lastLessonTopic: 'AI for Productivity',
+          missedTestConcepts: ['Workflow automation', 'Task prioritization'],
+          promptMistakePatterns: ['Technical jargon overuse'],
+          preferredLearningStyle: 'examples',
+          identifiedStrengths: ['Logical thinking', 'Problem solving'],
+          weaknessAreas: ['Creative applications'],
+          totalLessonsCompleted: 12,
+          averageTestScore: 85,
+          lastActivity: new Date('2024-01-19T16:45:00'),
+          interactionPatterns: {
+            asksForExamples: true,
+            needsEncouragement: true,
+            prefersStepByStep: true
+          }
         }
       ]);
 
@@ -539,12 +624,13 @@ export default function Admin() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="sessions">Session Logs</TabsTrigger>
             <TabsTrigger value="flags">Flagged Content</TabsTrigger>
             <TabsTrigger value="tests">Test Results</TabsTrigger>
             <TabsTrigger value="badges">Badge History</TabsTrigger>
             <TabsTrigger value="publications">Publications</TabsTrigger>
+            <TabsTrigger value="memory">Memory Insights</TabsTrigger>
           </TabsList>
 
           {/* Session Logs Tab */}
@@ -887,6 +973,269 @@ export default function Admin() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Student Memory Insights Tab */}
+          <TabsContent value="memory" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Student Memory Insights</CardTitle>
+                    <CardDescription>Real-time view of student learning profiles and patterns</CardDescription>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button onClick={exportMemoryInsights}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export CSV
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card>
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-primary">{studentMemoryInsights.length}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Active Students</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {Math.round(studentMemoryInsights.reduce((sum, s) => sum + s.averageTestScore, 0) / studentMemoryInsights.length) || 0}%
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Avg Score</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {Math.round(studentMemoryInsights.reduce((sum, s) => sum + s.totalLessonsCompleted, 0) / studentMemoryInsights.length) || 0}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Avg Lessons</div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {studentMemoryInsights.filter(s => s.interactionPatterns.needsEncouragement).length}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Need Support</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Student Memory Table */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Student
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Learning Style
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Performance
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Strengths
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Areas to Improve
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Last Topic
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                          {studentMemoryInsights.map((insight) => (
+                            <tr key={insight.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className="flex-shrink-0 h-8 w-8">
+                                    <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                      <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                                    </div>
+                                  </div>
+                                  <div className="ml-3">
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {insight.userName || 'Anonymous'}
+                                    </div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      {insight.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <span className="text-lg mr-2">{getLearningStyleIcon(insight.preferredLearningStyle)}</span>
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                                      {insight.preferredLearningStyle}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {insight.interactionPatterns.asksForExamples && '📚 Examples • '}
+                                      {insight.interactionPatterns.prefersStepByStep && '🪜 Step-by-step • '}
+                                      {insight.interactionPatterns.needsEncouragement && '💪 Needs support'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="text-sm">
+                                  <div className={`font-medium ${getPerformanceColor(insight.averageTestScore)}`}>
+                                    {insight.averageTestScore}% avg
+                                  </div>
+                                  <div className="text-gray-500 dark:text-gray-400">
+                                    {insight.totalLessonsCompleted} lessons
+                                  </div>
+                                </div>
+                              </td>
+                              
+                              <td className="px-4 py-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {insight.identifiedStrengths.slice(0, 2).map((strength, index) => (
+                                    <Badge key={index} variant="default" className="text-xs bg-green-100 text-green-700">
+                                      {strength}
+                                    </Badge>
+                                  ))}
+                                  {insight.identifiedStrengths.length > 2 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{insight.identifiedStrengths.length - 2}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
+                              
+                              <td className="px-4 py-4">
+                                <div className="space-y-1">
+                                  {insight.weaknessAreas.slice(0, 2).map((weakness, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs mr-1">
+                                      {weakness}
+                                    </Badge>
+                                  ))}
+                                  {insight.missedTestConcepts.slice(0, 1).map((concept, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs mr-1 bg-yellow-100 text-yellow-700">
+                                      {concept}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </td>
+                              
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="text-sm">
+                                  <div className="font-medium text-gray-900 dark:text-white">
+                                    {insight.lastLessonTopic || 'None'}
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {insight.lastActivity.toLocaleDateString()}
+                                  </div>
+                                </div>
+                              </td>
+                              
+                              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div className="flex space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => resetStudentMemory(insight.userId)}
+                                    className="text-orange-600 hover:text-orange-700"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Reset
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                  >
+                                    <Eye className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Detailed Analysis Cards */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Learning Style Distribution</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {['visual', 'text', 'voice', 'examples'].map(style => {
+                            const count = studentMemoryInsights.filter(s => s.preferredLearningStyle === style).length;
+                            const percentage = studentMemoryInsights.length > 0 ? (count / studentMemoryInsights.length) * 100 : 0;
+                            return (
+                              <div key={style} className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <span className="mr-2">{getLearningStyleIcon(style)}</span>
+                                  <span className="text-sm capitalize">{style}</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div
+                                      className="bg-primary h-2 rounded-full"
+                                      style={{ width: `${percentage}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-sm text-gray-600 dark:text-gray-400 w-8">{count}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">Common Patterns</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">Most Common Mistakes</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              Vague prompts, Missing examples, Technical jargon
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">Top Strength Areas</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              Creative writing, Problem solving, Critical thinking
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">Students Needing Support</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              {studentMemoryInsights.filter(s => s.averageTestScore < 75 || s.interactionPatterns.needsEncouragement).length} students
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               </CardContent>
             </Card>

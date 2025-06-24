@@ -106,6 +106,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/memory-insights", async (req, res) => {
+    try {
+      const insights = await AdminService.getStudentMemoryInsights();
+      res.json(insights);
+    } catch (error) {
+      console.error("Memory insights error:", error);
+      res.status(500).json({ error: "Failed to get memory insights" });
+    }
+  });
+
+  app.post("/api/admin/reset-memory", async (req, res) => {
+    try {
+      const { userId, adminEmail } = req.body;
+      const result = await AdminService.resetStudentMemory(userId, adminEmail);
+      res.json(result);
+    } catch (error) {
+      console.error("Reset memory error:", error);
+      res.status(500).json({ error: "Failed to reset student memory" });
+    }
+  });
+
   // use storage to perform CRUD operations on the storage interface
   // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
 

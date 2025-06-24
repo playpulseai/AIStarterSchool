@@ -207,6 +207,40 @@ export class RoleValidator {
     ];
     return adminEmails.includes(userEmail);
   }
+
+  static async getStudentMemoryForAdmin(userId: string): Promise<any> {
+    try {
+      // In real implementation, would fetch from Firebase student_memory/{userId}
+      const stored = localStorage.getItem(`student_memory_${userId}`);
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.error('Failed to load student memory for admin:', error);
+      return null;
+    }
+  }
+
+  static async getAllStudentMemories(): Promise<any[]> {
+    try {
+      // In real implementation, would fetch all from Firebase student_memory/ collection
+      // For demo, scan localStorage for memory entries
+      const memories = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('student_memory_')) {
+          const data = localStorage.getItem(key);
+          if (data) {
+            const memory = JSON.parse(data);
+            memory.id = key.replace('student_memory_', '');
+            memories.push(memory);
+          }
+        }
+      }
+      return memories;
+    } catch (error) {
+      console.error('Failed to load all student memories:', error);
+      return [];
+    }
+  }
   
   static getGradeBandFromGrade(grade: string): 'middle' | 'high' {
     const gradeNum = parseInt(grade);

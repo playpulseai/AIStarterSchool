@@ -188,6 +188,51 @@ export class AdminService {
     return adminEmails.includes(userEmail);
   }
 
+  // Get student memory insights
+  static async getStudentMemoryInsights() {
+    try {
+      // Mock implementation - in real app would query Firebase student_memory collection
+      return [
+        {
+          id: 'mem-1',
+          userId: 'user-123',
+          userName: 'alex.student',
+          email: 'alex.student@school.edu',
+          lastLessonTopic: 'Prompting Basics',
+          missedTestConcepts: ['Complex prompting', 'Context management'],
+          promptMistakePatterns: ['Uses vague prompts', 'Forgets examples'],
+          preferredLearningStyle: 'visual',
+          identifiedStrengths: ['Creative writing', 'AI art prompts'],
+          weaknessAreas: ['Technical concepts'],
+          totalLessonsCompleted: 8,
+          averageTestScore: 78,
+          lastActivity: new Date('2024-01-20T14:30:00'),
+          interactionPatterns: {
+            asksForExamples: true,
+            needsEncouragement: false,
+            prefersStepByStep: true
+          }
+        }
+      ];
+    } catch (error) {
+      console.error('Failed to get student memory insights:', error);
+      throw new Error('Failed to load student memory insights');
+    }
+  }
+
+  // Reset student memory for debugging
+  static async resetStudentMemory(userId: string, adminEmail: string) {
+    try {
+      // In real implementation, would delete/reset Firebase student_memory/{userId}
+      console.log(`Student memory reset for ${userId} by ${adminEmail}`);
+      await this.logAdminAction(adminEmail, 'reset_student_memory', { userId });
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to reset student memory:', error);
+      throw new Error('Failed to reset student memory');
+    }
+  }
+
   // Log admin action
   static async logAdminAction(adminEmail: string, action: string, details: any) {
     try {
