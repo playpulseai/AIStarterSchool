@@ -14,6 +14,10 @@ import Features from "@/pages/features";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Dashboard from "@/pages/dashboard";
+import Lessons from "@/pages/lessons";
+import Test from "@/pages/test";
+import Projects from "@/pages/projects";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -48,6 +52,26 @@ function Router() {
           <Route path="/dashboard">
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/lessons">
+            <ProtectedRoute>
+              <Lessons />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/test">
+            <ProtectedRoute>
+              <Test />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/projects">
+            <ProtectedRoute>
+              <Projects />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/profile">
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           </Route>
           <Route component={NotFound} />

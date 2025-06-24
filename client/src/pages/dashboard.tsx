@@ -1,8 +1,9 @@
+import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Trophy, Clock, TrendingUp, Brain, Target } from 'lucide-react';
+import { BookOpen, Trophy, Clock, TrendingUp, Brain, Target, Home, GraduationCap, TestTube, FolderOpen, User } from 'lucide-react';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -185,6 +186,32 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-card border-t border-gray-200 dark:border-border md:hidden">
+          <div className="flex items-center justify-around py-2">
+            <Link href="/" className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary">
+              <Home className="h-5 w-5" />
+              <span className="text-xs mt-1">Home</span>
+            </Link>
+            <Link href="/lessons" className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary">
+              <GraduationCap className="h-5 w-5" />
+              <span className="text-xs mt-1">Lessons</span>
+            </Link>
+            <Link href="/test" className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary">
+              <TestTube className="h-5 w-5" />
+              <span className="text-xs mt-1">Test</span>
+            </Link>
+            <Link href="/projects" className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary">
+              <FolderOpen className="h-5 w-5" />
+              <span className="text-xs mt-1">Projects</span>
+            </Link>
+            <Link href="/profile" className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary">
+              <User className="h-5 w-5" />
+              <span className="text-xs mt-1">Profile</span>
+            </Link>
           </div>
         </div>
       </div>
