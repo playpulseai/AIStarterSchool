@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,8 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, FolderOpen, Eye, Edit, Trash2, Calendar, User } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, FolderOpen, Eye, Edit, Trash2, Calendar, User, Heart, Download, Copy, FileText, Trophy, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { SessionLogger, getUserId } from '@/lib/safety-agents';
+import { ProgressTracker, CURRICULUM_TOPICS } from '@/lib/curriculum-engine';
 
 interface Project {
   id: string;
@@ -21,6 +24,31 @@ interface Project {
   updatedAt: Date;
   content: string;
   tags: string[];
+}
+
+interface AIGeneration {
+  id: string;
+  userId: string;
+  topicId?: string;
+  lessonStep?: number;
+  prompt: string;
+  aiResponse: string;
+  timestamp: Date;
+  isFavorite: boolean;
+  generationType: 'lesson' | 'project' | 'experiment';
+  metadata?: {
+    gradeBand?: string;
+    responseTime?: number;
+    tokenCount?: number;
+  };
+}
+
+interface StudentBadge {
+  topicId: string;
+  topicTitle: string;
+  icon: string;
+  earnedDate: Date;
+  testScore: number;
 }
 
 const PROJECT_TYPES = {
@@ -77,9 +105,73 @@ export default function Projects() {
     }
   ]);
 
+  const [aiGenerations, setAiGenerations] = useState<AIGeneration[]>([
+    {
+      id: 'gen-1',
+      userId: 'demo-user',
+      topicId: 'prompting-basics',
+      lessonStep: 1,
+      prompt: 'Write a clear prompt to help me create a story about a robot chef',
+      aiResponse: 'Here\'s a well-structured prompt: "Write a 300-word short story about ROBO-3000, a malfunctioning kitchen robot who accidentally becomes the best chef in New York City. Include: how the malfunction actually improves its cooking, one specific dish it creates, and how the human customers react when they discover their chef is a robot. Use a humorous tone and include dialogue between ROBO-3000 and the restaurant owner."',
+      timestamp: new Date('2024-01-16'),
+      isFavorite: true,
+      generationType: 'lesson',
+      metadata: {
+        gradeBand: 'middle',
+        responseTime: 1200,
+        tokenCount: 95
+      }
+    },
+    {
+      id: 'gen-2',
+      userId: 'demo-user',
+      topicId: 'ai-art',
+      lessonStep: 2,
+      prompt: 'Create a prompt for generating a fantasy landscape with magical elements',
+      aiResponse: 'Perfect art generation prompt: "A mystical forest clearing at twilight with floating luminescent crystals, ancient stone archways covered in glowing vines, ethereal blue and purple lighting, mystical fog rolling across the ground, digital art style, highly detailed, fantasy concept art, trending on ArtStation"',
+      timestamp: new Date('2024-01-18'),
+      isFavorite: false,
+      generationType: 'lesson',
+      metadata: {
+        gradeBand: 'middle',
+        responseTime: 800,
+        tokenCount: 67
+      }
+    },
+    {
+      id: 'gen-3',
+      userId: 'demo-user',
+      prompt: 'Help me write a persuasive essay about renewable energy for my science class',
+      aiResponse: 'Here\'s a structured approach for your essay:\n\n**Introduction**: Start with a striking fact about climate change, then introduce renewable energy as a solution.\n\n**Body Paragraph 1**: Economic benefits - job creation, long-term cost savings\n**Body Paragraph 2**: Environmental impact - reduced emissions, cleaner air\n**Body Paragraph 3**: Energy independence - reduced reliance on fossil fuel imports\n\n**Conclusion**: Summarize benefits and call for immediate action.\n\n**Key phrases to use**: "sustainable future," "clean energy transition," "environmental stewardship"\n\nRemember to cite specific statistics and examples!',
+      timestamp: new Date('2024-01-20'),
+      isFavorite: true,
+      generationType: 'project',
+      metadata: {
+        gradeBand: 'high',
+        responseTime: 1800,
+        tokenCount: 142
+      }
+    }
+  ]);
+
+  const [earnedBadges, setEarnedBadges] = useState<StudentBadge[]>([
+    {
+      topicId: 'prompting-basics',
+      topicTitle: 'Prompting Basics',
+      icon: '🌱',
+      earnedDate: new Date('2024-01-16'),
+      testScore: 85
+    }
+  ]);
+
+  const [progressData, setProgressData] = useState<any[]>([]);
+
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedGeneration, setSelectedGeneration] = useState<AIGeneration | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isGenerationDialogOpen, setIsGenerationDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('projects');
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',
@@ -87,6 +179,35 @@ export default function Projects() {
     content: '',
     tags: ''
   });
+
+  useEffect(() => {
+    loadUserProgress();
+  }, []);
+
+  const loadUserProgress = async () => {
+    try {
+      const userId = getUserId();
+      const progress = await ProgressTracker.getAllTopicProgress(userId);
+      setProgressData(progress);
+      
+      // Load earned badges
+      const badges = progress
+        .filter(p => p.badgeUnlocked)
+        .map(p => {
+          const topic = CURRICULUM_TOPICS.find(t => t.id === p.topicId);
+          return {
+            topicId: p.topicId,
+            topicTitle: topic?.title || 'Unknown Topic',
+            icon: topic?.icon || '🏆',
+            earnedDate: p.lastActivity,
+            testScore: p.testScore || 0
+          };
+        });
+      setEarnedBadges(badges);
+    } catch (error) {
+      console.error('Failed to load progress:', error);
+    }
+  };
 
   const createProject = () => {
     if (!newProject.title.trim() || !newProject.description.trim()) {
@@ -133,11 +254,109 @@ export default function Projects() {
     });
   };
 
-  const deleteProject = (projectId: string) => {
+  const deleteProject = async (projectId: string) => {
+    // Log deletion action
+    const userId = getUserId();
+    await SessionLogger.logSession({
+      userId,
+      gradeBand: 'middle',
+      lessonStep: 0,
+      action: 'prompt_submit',
+      content: `Deleted project: ${projectId}`,
+      timestamp: new Date()
+    });
+
     setProjects(prev => prev.filter(project => project.id !== projectId));
     toast({
       title: "Project Deleted",
       description: "Project has been removed from your portfolio.",
+    });
+  };
+
+  const toggleFavorite = async (generationId: string) => {
+    const userId = getUserId();
+    await SessionLogger.logSession({
+      userId,
+      gradeBand: 'middle',
+      lessonStep: 0,
+      action: 'prompt_submit',
+      content: `Toggled favorite: ${generationId}`,
+      timestamp: new Date()
+    });
+
+    setAiGenerations(prev => prev.map(gen => 
+      gen.id === generationId 
+        ? { ...gen, isFavorite: !gen.isFavorite }
+        : gen
+    ));
+    
+    toast({
+      title: "Updated",
+      description: "Favorite status updated.",
+    });
+  };
+
+  const deleteGeneration = async (generationId: string) => {
+    const userId = getUserId();
+    await SessionLogger.logSession({
+      userId,
+      gradeBand: 'middle',
+      lessonStep: 0,
+      action: 'prompt_submit',
+      content: `Deleted AI generation: ${generationId}`,
+      timestamp: new Date()
+    });
+
+    setAiGenerations(prev => prev.filter(gen => gen.id !== generationId));
+    toast({
+      title: "Deleted",
+      description: "AI generation has been removed.",
+    });
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied",
+        description: "Content copied to clipboard.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to copy to clipboard.",
+      });
+    }
+  };
+
+  const exportToPDF = (generation: AIGeneration) => {
+    // Create a simple text export (in a real app, you'd use a PDF library)
+    const content = `AI Generation Export
+Date: ${generation.timestamp.toLocaleDateString()}
+Topic: ${generation.topicId || 'General'}
+
+Prompt:
+${generation.prompt}
+
+AI Response:
+${generation.aiResponse}
+
+Generated with AIStarter School`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai-generation-${generation.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Exported",
+      description: "AI generation exported successfully.",
     });
   };
 
@@ -161,10 +380,10 @@ export default function Projects() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              My AI Projects
+              My AI Portfolio
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Build and showcase your AI creations
+              Manage your AI projects, generations, and achievements
             </p>
           </div>
           
@@ -254,8 +473,39 @@ export default function Projects() {
           </Dialog>
         </div>
 
-        {/* Projects Grid */}
-        {projects.length === 0 ? (
+        {/* Earned Badges Section */}
+        {earnedBadges.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+              <Trophy className="h-5 w-5 mr-2 text-accent" />
+              Earned Badges
+            </h2>
+            <div className="flex flex-wrap gap-4">
+              {earnedBadges.map((badge) => (
+                <div key={badge.topicId} className="bg-white dark:bg-card rounded-lg p-4 border border-gray-200 dark:border-border flex items-center space-x-3">
+                  <div className="text-2xl">{badge.icon}</div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{badge.topicTitle}</h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Earned {badge.earnedDate.toLocaleDateString()} • Score: {badge.testScore}%
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tabs for different content types */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="projects">Projects ({projects.length})</TabsTrigger>
+            <TabsTrigger value="generations">AI Generations ({aiGenerations.length})</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="projects" className="space-y-6">
+            {/* Projects Grid */}
+            {projects.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <FolderOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -354,6 +604,8 @@ export default function Projects() {
             })}
           </div>
         )}
+          </TabsContent>
+        </Tabs>
 
         {/* Project View Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
@@ -408,6 +660,126 @@ export default function Projects() {
                       <span className="font-medium">Last Updated:</span>
                       <p className="text-gray-600 dark:text-gray-400">{selectedProject.updatedAt.toLocaleDateString()}</p>
                     </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* AI Generation View Dialog */}
+        <Dialog open={isGenerationDialogOpen} onOpenChange={setIsGenerationDialogOpen}>
+          <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
+            {selectedGeneration && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center space-x-2">
+                    <FileText className="h-5 w-5" />
+                    <span>AI Generation Details</span>
+                  </DialogTitle>
+                  <DialogDescription>
+                    {selectedGeneration.generationType} • {selectedGeneration.timestamp.toLocaleString()}
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={selectedGeneration.generationType === 'lesson' ? 'default' : 'secondary'}>
+                      {selectedGeneration.generationType}
+                    </Badge>
+                    {selectedGeneration.topicId && (
+                      <Badge variant="outline">
+                        {CURRICULUM_TOPICS.find(t => t.id === selectedGeneration.topicId)?.title || selectedGeneration.topicId}
+                        {selectedGeneration.lessonStep && ` - Lesson ${selectedGeneration.lessonStep}`}
+                      </Badge>
+                    )}
+                    {selectedGeneration.isFavorite && (
+                      <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                        <Heart className="h-3 w-3 mr-1 fill-current" />
+                        Favorite
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Original Prompt:</h4>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border">
+                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {selectedGeneration.prompt}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3">AI Response:</h4>
+                    <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {selectedGeneration.aiResponse}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {selectedGeneration.metadata && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Generation Details:</h4>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          {selectedGeneration.metadata.gradeBand && (
+                            <div>
+                              <span className="font-medium">Grade Band:</span>
+                              <span className="ml-2 text-gray-600 dark:text-gray-400">
+                                {selectedGeneration.metadata.gradeBand === 'middle' ? '6-8' : '9-12'}
+                              </span>
+                            </div>
+                          )}
+                          {selectedGeneration.metadata.responseTime && (
+                            <div>
+                              <span className="font-medium">Response Time:</span>
+                              <span className="ml-2 text-gray-600 dark:text-gray-400">
+                                {selectedGeneration.metadata.responseTime}ms
+                              </span>
+                            </div>
+                          )}
+                          {selectedGeneration.metadata.tokenCount && (
+                            <div>
+                              <span className="font-medium">Tokens:</span>
+                              <span className="ml-2 text-gray-600 dark:text-gray-400">
+                                {selectedGeneration.metadata.tokenCount}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <Button
+                      onClick={() => toggleFavorite(selectedGeneration.id)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Heart className={`h-4 w-4 mr-2 ${selectedGeneration.isFavorite ? 'text-red-500 fill-current' : ''}`} />
+                      {selectedGeneration.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => copyToClipboard(`Prompt: ${selectedGeneration.prompt}\n\nResponse: ${selectedGeneration.aiResponse}`)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy All
+                    </Button>
+                    
+                    <Button
+                      onClick={() => exportToPDF(selectedGeneration)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
                   </div>
                 </div>
               </>
