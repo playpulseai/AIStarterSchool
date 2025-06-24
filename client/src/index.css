@@ -79,4 +79,8 @@
   .nav-link-active {
     @apply text-gray-900 dark:text-white font-medium border-b-2 border-primary pb-1;
   }
+
+  .safe-area-pb-2 {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
 }
