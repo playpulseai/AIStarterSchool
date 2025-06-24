@@ -34,10 +34,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // Bypass authentication check - allow access to all routes
-  // if (!user) {
-  //   return <Login />;
-  // }
+  // Authentication completely bypassed for demo mode
   
   return <>{children}</>;
 }

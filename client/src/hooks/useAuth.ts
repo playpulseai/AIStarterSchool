@@ -1,25 +1,37 @@
 import { useState, useEffect } from 'react';
-import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+
+// Mock User type to avoid Firebase dependency
+interface MockUser {
+  uid: string;
+  email: string;
+  emailVerified: boolean;
+  displayName: string | null;
+  photoURL: string | null;
+  getIdToken: () => Promise<string>;
+  getIdTokenResult: () => Promise<{ token: string }>;
+}
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if we're in demo mode (no valid Firebase credentials)
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    // Always bypass authentication in demo mode
+    setLoading(false);
+    
+    // Set a mock user for demo purposes
+    const mockUser: MockUser = {
+      uid: 'demo-user-bypass',
+      email: 'demo@aistarterschool.com',
+      emailVerified: true,
+      displayName: 'Demo User',
+      photoURL: null,
+      getIdToken: async () => 'demo-token',
+      getIdTokenResult: async () => ({ token: 'demo-token' })
+    };
+    
+    setUser(mockUser);
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -27,25 +39,19 @@ export function useAuth() {
       setError(null);
       setLoading(true);
       
-      // Demo mode fallback if Firebase credentials are not configured
-      if (!auth) {
-        // Create a mock user object for demo purposes
-        const mockUser = {
-          uid: 'demo-user-' + Date.now(),
-          email: email,
-          emailVerified: true,
-          displayName: email.split('@')[0],
-          photoURL: null,
-          getIdToken: async () => 'demo-token',
-          getIdTokenResult: async () => ({ token: 'demo-token' })
-        } as User;
-        
-        setUser(mockUser);
-        return mockUser;
-      }
+      // Always return mock user in bypass mode
+      const mockUser: MockUser = {
+        uid: 'demo-user-' + Date.now(),
+        email: email,
+        emailVerified: true,
+        displayName: email.split('@')[0],
+        photoURL: null,
+        getIdToken: async () => 'demo-token',
+        getIdTokenResult: async () => ({ token: 'demo-token' })
+      };
       
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return result.user;
+      setUser(mockUser);
+      return mockUser;
     } catch (error: any) {
       setError(error.message);
       throw error;
@@ -59,25 +65,19 @@ export function useAuth() {
       setError(null);
       setLoading(true);
       
-      // Demo mode fallback if Firebase credentials are not configured
-      if (!auth) {
-        // Create a mock user object for demo purposes
-        const mockUser = {
-          uid: 'demo-user-' + Date.now(),
-          email: email,
-          emailVerified: true,
-          displayName: email.split('@')[0],
-          photoURL: null,
-          getIdToken: async () => 'demo-token',
-          getIdTokenResult: async () => ({ token: 'demo-token' })
-        } as User;
-        
-        setUser(mockUser);
-        return mockUser;
-      }
+      // Always return mock user in bypass mode
+      const mockUser: MockUser = {
+        uid: 'demo-user-' + Date.now(),
+        email: email,
+        emailVerified: true,
+        displayName: email.split('@')[0],
+        photoURL: null,
+        getIdToken: async () => 'demo-token',
+        getIdTokenResult: async () => ({ token: 'demo-token' })
+      };
       
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      return result.user;
+      setUser(mockUser);
+      return mockUser;
     } catch (error: any) {
       setError(error.message);
       throw error;
@@ -89,14 +89,8 @@ export function useAuth() {
   const logout = async () => {
     try {
       setError(null);
-      
-      // Demo mode - just clear the user
-      if (!auth) {
-        setUser(null);
-        return;
-      }
-      
-      await signOut(auth);
+      // In bypass mode, just clear the user
+      setUser(null);
     } catch (error: any) {
       setError(error.message);
       throw error;
