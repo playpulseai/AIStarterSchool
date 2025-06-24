@@ -1,10 +1,10 @@
-// Mock Firebase Firestore functions for bypass mode
+import { getFirestore, collection, addDoc, updateDoc, doc, getDoc, getDocs, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
+import app from './firebase';
 import { apiRequest } from './queryClient';
 import { SessionLogger, getUserId } from './safety-agents';
 import { SmartMemory } from './smart-memory';
 
-// Mock database for bypass mode
-const db = null;
+const db = getFirestore(app);
 
 export interface CurriculumTopic {
   id: string;
