@@ -9,6 +9,23 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "demo-app-id",
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// Only initialize Firebase if we have real credentials
+let app;
+let auth;
+
+try {
+  if (import.meta.env.VITE_FIREBASE_API_KEY === "demo-key") {
+    console.log("Running in demo mode - Firebase authentication disabled");
+    // Create a minimal auth object for demo mode
+    auth = null;
+  } else {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+  }
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+  auth = null;
+}
+
+export { auth };
 export default app;

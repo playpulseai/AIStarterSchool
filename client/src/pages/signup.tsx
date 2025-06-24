@@ -198,12 +198,12 @@ export default function Signup() {
                 onCheckedChange={(checked) => handleInputChange('acceptTerms', checked as boolean)}
                 required
               />
-              <Label htmlFor="terms" className="text-sm">
+              <label htmlFor="terms" className="text-sm">
                 I agree to the{' '}
                 <a href="#" className="text-primary hover:text-primary/90">Terms of Service</a>
                 {' '}and{' '}
                 <a href="#" className="text-primary hover:text-primary/90">Privacy Policy</a>
-              </Label>
+              </label>
             </div>
 
             <div>
@@ -229,12 +229,10 @@ export default function Signup() {
             <div className="text-center">
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Already have an account?{' '}
-                <Link href="/login">
-                  <a className="font-medium text-primary hover:text-primary/90">
-                    Sign in here
-                  </a>
-                </Link>
               </span>
+              <Link href="/login" className="font-medium text-primary hover:text-primary/90">
+                Sign in here
+              </Link>
             </div>
           </form>
         </div>

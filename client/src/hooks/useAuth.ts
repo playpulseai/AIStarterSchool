@@ -8,6 +8,12 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check if we're in demo mode
+    if (import.meta.env.VITE_FIREBASE_API_KEY === "demo-key") {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -20,6 +26,24 @@ export function useAuth() {
     try {
       setError(null);
       setLoading(true);
+      
+      // Temporary demo mode fallback if Firebase credentials are not configured
+      if (import.meta.env.VITE_FIREBASE_API_KEY === "demo-key") {
+        // Create a mock user object for demo purposes
+        const mockUser = {
+          uid: 'demo-user-' + Date.now(),
+          email: email,
+          emailVerified: true,
+          displayName: email.split('@')[0],
+          photoURL: null,
+          getIdToken: async () => 'demo-token',
+          getIdTokenResult: async () => ({ token: 'demo-token' })
+        } as User;
+        
+        setUser(mockUser);
+        return mockUser;
+      }
+      
       const result = await signInWithEmailAndPassword(auth, email, password);
       return result.user;
     } catch (error: any) {
@@ -34,6 +58,24 @@ export function useAuth() {
     try {
       setError(null);
       setLoading(true);
+      
+      // Temporary demo mode fallback if Firebase credentials are not configured
+      if (import.meta.env.VITE_FIREBASE_API_KEY === "demo-key") {
+        // Create a mock user object for demo purposes
+        const mockUser = {
+          uid: 'demo-user-' + Date.now(),
+          email: email,
+          emailVerified: true,
+          displayName: email.split('@')[0],
+          photoURL: null,
+          getIdToken: async () => 'demo-token',
+          getIdTokenResult: async () => ({ token: 'demo-token' })
+        } as User;
+        
+        setUser(mockUser);
+        return mockUser;
+      }
+      
       const result = await createUserWithEmailAndPassword(auth, email, password);
       return result.user;
     } catch (error: any) {
