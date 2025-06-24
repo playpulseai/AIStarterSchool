@@ -19,6 +19,7 @@ import Test from "@/pages/test";
 import Projects from "@/pages/projects";
 import Profile from "@/pages/profile";
 import Curriculum from "@/pages/curriculum";
+import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -78,6 +79,11 @@ function Router() {
           <Route path="/curriculum">
             <ProtectedRoute>
               <Curriculum />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/admin">
+            <ProtectedRoute>
+              <Admin />
             </ProtectedRoute>
           </Route>
           <Route component={NotFound} />

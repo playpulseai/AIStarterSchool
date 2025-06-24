@@ -199,7 +199,10 @@ export class RoleValidator {
     const adminEmails = [
       'admin@aistarter.school',
       'teacher@aistarter.school',
-      'support@aistarter.school'
+      'support@aistarter.school',
+      // Add demo admin emails for testing
+      'admin@demo.com',
+      'test@admin.com'
     ];
     return adminEmails.includes(userEmail);
   }
