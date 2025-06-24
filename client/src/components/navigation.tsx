@@ -35,28 +35,20 @@ export function Navigation() {
           </Link>
           
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/">
-              <a className={isActive('/') ? 'nav-link-active' : 'nav-link'}>
-                Home
-              </a>
+            <Link href="/" className={isActive('/') ? 'nav-link-active' : 'nav-link'}>
+              Home
             </Link>
-            <Link href="/about">
-              <a className={isActive('/about') ? 'nav-link-active' : 'nav-link'}>
-                About
-              </a>
+            <Link href="/about" className={isActive('/about') ? 'nav-link-active' : 'nav-link'}>
+              About
             </Link>
-            <Link href="/features">
-              <a className={isActive('/features') ? 'nav-link-active' : 'nav-link'}>
-                Features
-              </a>
+            <Link href="/features" className={isActive('/features') ? 'nav-link-active' : 'nav-link'}>
+              Features
             </Link>
             
             {user ? (
               <>
-                <Link href="/dashboard">
-                  <a className={isActive('/dashboard') ? 'nav-link-active' : 'nav-link'}>
-                    Dashboard
-                  </a>
+                <Link href="/dashboard" className={isActive('/dashboard') ? 'nav-link-active' : 'nav-link'}>
+                  Dashboard
                 </Link>
                 <Button onClick={handleLogout} variant="outline" size="sm">
                   Logout
@@ -64,10 +56,8 @@ export function Navigation() {
               </>
             ) : (
               <>
-                <Link href="/login">
-                  <a className={isActive('/login') ? 'nav-link-active' : 'nav-link'}>
-                    Login
-                  </a>
+                <Link href="/login" className={isActive('/login') ? 'nav-link-active' : 'nav-link'}>
+                  Login
                 </Link>
                 <Link href="/signup">
                   <Button className="bg-primary hover:bg-primary/90 text-white font-medium">
@@ -94,28 +84,20 @@ export function Navigation() {
         {mobileMenuOpen && (
           <div className="md:hidden bg-white dark:bg-card border-t border-gray-200 dark:border-border">
             <div className="px-4 py-3 space-y-3">
-              <Link href="/">
-                <a className="block text-gray-900 dark:text-white font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  Home
-                </a>
+              <Link href="/" className="block text-gray-900 dark:text-white font-medium" onClick={() => setMobileMenuOpen(false)}>
+                Home
               </Link>
-              <Link href="/about">
-                <a className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                  About
-                </a>
+              <Link href="/about" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
+                About
               </Link>
-              <Link href="/features">
-                <a className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                  Features
-                </a>
+              <Link href="/features" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
+                Features
               </Link>
               
               {user ? (
                 <>
-                  <Link href="/dashboard">
-                    <a className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                      Dashboard
-                    </a>
+                  <Link href="/dashboard" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
+                    Dashboard
                   </Link>
                   <Button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} variant="outline" size="sm" className="w-full">
                     Logout
@@ -123,10 +105,8 @@ export function Navigation() {
                 </>
               ) : (
                 <>
-                  <Link href="/login">
-                    <a className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                      Login
-                    </a>
+                  <Link href="/login" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
+                    Login
                   </Link>
                   <Link href="/signup">
                     <Button className="w-full bg-primary hover:bg-primary/90 text-white font-medium" onClick={() => setMobileMenuOpen(false)}>
