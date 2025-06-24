@@ -118,6 +118,20 @@ export default function Profile() {
     bio: profile.bio,
     interests: profile.interests.join(', ')
   });
+  const [memoryInsights, setMemoryInsights] = useState<any>(null);
+
+  useEffect(() => {
+    loadMemoryInsights();
+  }, []);
+
+  const loadMemoryInsights = async () => {
+    try {
+      const insights = await SmartMemory.getMemoryInsights();
+      setMemoryInsights(insights);
+    } catch (error) {
+      console.error('Failed to load memory insights:', error);
+    }
+  };
 
   const saveProfile = () => {
     setProfile(prev => ({
@@ -296,7 +310,9 @@ export default function Profile() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card className="text-center">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-primary mb-1">{profile.stats.lessonsCompleted}</div>
+              <div className="text-2xl font-bold text-primary mb-1">
+                {memoryInsights ? memoryInsights.totalLessons : profile.stats.lessonsCompleted}
+              </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Lessons</div>
             </CardContent>
           </Card>
@@ -317,7 +333,16 @@ export default function Profile() {
           
           <Card className="text-center">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-secondary mb-1">{profile.stats.studyHours}h</div>
+              <div className="text-2xl font-bold text-secondary mb-1">
+                {memoryInsights ? Math.round(memoryInsights.averageScore) : 85}%
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Avg Score</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="text-center">
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-warning mb-1">{profile.stats.studyHours}h</div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Study Time</div>
             </CardContent>
           </Card>
