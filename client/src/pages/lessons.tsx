@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { PlayCircle, Send, Volume2, RotateCcw, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { GuardianAgent, SessionLogger, RoleValidator, getUserId, saveUserProgress } from '@/lib/safety-agents';
+import { apiRequest } from '@/lib/queryClient';
 
 const LESSON_STEPS = [
   { id: 1, title: 'Prompting Basics', icon: '🌱', description: 'Learn how to write clear instructions for AI' },
@@ -68,16 +70,41 @@ Current lesson: ${currentLesson.title} - ${currentLesson.description}`;
   };
 
   const startLesson = async () => {
+    const userId = getUserId();
+    const currentGradeBand = gradeLevel;
+    
+    // Role validation
+    if (!RoleValidator.validateGradeBandAccess(currentGradeBand, currentGradeBand)) {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You don't have access to this grade level content.",
+      });
+      return;
+    }
+
     setLessonActive(true);
     setConversationHistory([]);
     setLessonProgress(20);
     setIsLoading(true);
 
+    // Log lesson start
+    await SessionLogger.logLessonStart(userId, currentGradeBand, currentStep);
+
     try {
-      // Simulate AI teacher greeting
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const greeting = `Hi, I'm your AI teacher for today! 👋 
+      // Generate initial lesson content using OpenAI
+      const response = await apiRequest<{ content: string }>('/api/generate-lesson', {
+        method: 'POST',
+        body: JSON.stringify({
+          gradeBand: currentGradeBand,
+          lessonStep: currentStep
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const greeting = response.content || `Hi, I'm your AI teacher for today! 👋 
 
 I'm here to guide you through "${LESSON_STEPS[currentStep - 1].title}" - an exciting lesson designed specifically for students in ${GRADE_LEVELS[gradeLevel].label}.
 
@@ -87,14 +114,22 @@ Let's start with a quick question: What do you think artificial intelligence is,
 
 Type your answer below and let's begin this amazing journey! 🚀`;
 
-      setAiResponse(greeting);
+      // Filter AI output through Guardian Agent
+      const filterResult = await GuardianAgent.filterOutput(greeting, userId, currentGradeBand);
+      const finalGreeting = filterResult.isAllowed ? greeting : filterResult.filteredContent!;
+
+      setAiResponse(finalGreeting);
       setConversationHistory(prev => [...prev, { 
         role: 'ai', 
-        content: greeting, 
+        content: finalGreeting, 
         timestamp: new Date() 
       }]);
+
+      // Log AI response
+      await SessionLogger.logAiResponse(userId, currentGradeBand, currentStep, finalGreeting);
       
     } catch (error) {
+      console.error('Failed to start lesson:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -108,9 +143,26 @@ Type your answer below and let's begin this amazing journey! 🚀`;
   const submitResponse = async () => {
     if (!studentResponse.trim()) return;
 
-    setIsLoading(true);
+    const userId = getUserId();
+    const currentGradeBand = gradeLevel;
     const userMessage = studentResponse;
+
+    // Filter user input through Guardian Agent
+    const inputFilter = await GuardianAgent.filterInput(userMessage, userId, currentGradeBand);
+    if (!inputFilter.isAllowed) {
+      toast({
+        variant: "destructive",
+        title: "Content Filter",
+        description: inputFilter.filteredContent,
+      });
+      return;
+    }
+
+    setIsLoading(true);
     setStudentResponse('');
+
+    // Log user prompt
+    await SessionLogger.logPromptSubmit(userId, currentGradeBand, currentStep, userMessage);
 
     // Add student response to history
     setConversationHistory(prev => [...prev, { 
@@ -120,65 +172,51 @@ Type your answer below and let's begin this amazing journey! 🚀`;
     }]);
 
     try {
-      // Simulate AI teacher response
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Generate contextual response based on the lesson step
-      let aiResponseText = '';
-      
-      switch (currentStep) {
-        case 1: // Prompting Basics
-          aiResponseText = `Great response! ${userMessage.length > 20 ? "I can see you're thinking carefully about this." : "I'd love to hear more of your thoughts."} 
+      // Call OpenAI AI Teacher service
+      const aiRequest = {
+        message: userMessage,
+        gradeBand: currentGradeBand,
+        lessonStep: currentStep,
+        conversationHistory: conversationHistory.map(msg => ({
+          role: msg.role === 'student' ? 'user' as const : 'assistant' as const,
+          content: msg.content
+        }))
+      };
 
-Let me teach you about prompting - it's like giving clear instructions to an AI assistant. 
+      const aiResult = await apiRequest<{response: string, lessonComplete: boolean, nextStep?: number}>('/api/ai-teacher', {
+        method: 'POST',
+        body: JSON.stringify(aiRequest),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-Here's your first task: Try writing a prompt to ask an AI to help you write a short story about a robot who wants to be a chef. Make your prompt as clear and specific as possible.
+      // Filter AI output through Guardian Agent
+      const outputFilter = await GuardianAgent.filterOutput(aiResult.response, userId, currentGradeBand);
+      const finalResponse = outputFilter.isAllowed ? aiResult.response : outputFilter.filteredContent!;
 
-Remember: Good prompts are clear, specific, and include context. For example, instead of "write a story," try "write a 100-word story about a robot chef who is learning to cook Italian food."
-
-What's your prompt going to be? 🤖👨‍🍳`;
-          break;
-          
-        case 2: // AI Writing
-          aiResponseText = `Excellent! Now let's explore AI writing together.
-
-I noticed you said: "${userMessage.substring(0, 50)}${userMessage.length > 50 ? '...' : ''}"
-
-Here's a fun challenge: Use what you learned about prompting to create a story outline. Pick one of these scenarios:
-1. A day in the life of a student in the year 2050
-2. A conversation between a smartphone and a smart refrigerator
-3. Your own creative idea!
-
-Write a prompt that would help an AI create a detailed story outline. Include the main character, setting, and what problem they need to solve.
-
-What story will you choose? ✍️📚`;
-          break;
-          
-        default:
-          aiResponseText = `Thank you for sharing: "${userMessage}"
-
-That's a thoughtful response! Let me give you some feedback and guide you to the next part of our lesson.
-
-${Math.random() > 0.5 ? 
-  "I can see you're really grasping these concepts. Let's dive deeper..." : 
-  "You're on the right track! Let me help you explore this further..."}
-
-Here's your next challenge: Based on what we've discussed, try applying this concept in a practical way. 
-
-What would you like to try next? 🎯`;
-      }
-
-      setAiResponse(aiResponseText);
+      setAiResponse(finalResponse);
       setConversationHistory(prev => [...prev, { 
         role: 'ai', 
-        content: aiResponseText, 
+        content: finalResponse, 
         timestamp: new Date() 
       }]);
+
+      // Log AI response
+      await SessionLogger.logAiResponse(userId, currentGradeBand, currentStep, finalResponse);
       
       // Update progress
-      setLessonProgress(prev => Math.min(prev + 15, 100));
+      const newProgress = Math.min(lessonProgress + 15, 100);
+      setLessonProgress(newProgress);
+
+      // Save progress to Firebase
+      if (aiResult.lessonComplete) {
+        setLessonProgress(100);
+        await saveUserProgress(userId, currentGradeBand, currentStep, true);
+      }
       
     } catch (error) {
+      console.error('Failed to get AI response:', error);
       toast({
         variant: "destructive",
         title: "Error",

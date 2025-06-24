@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, Clock, Trophy, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { SessionLogger, RoleValidator, getUserId } from '@/lib/safety-agents';
 
 interface Question {
   id: number;
@@ -99,7 +100,13 @@ export default function Test() {
   const filteredQuestions = QUESTIONS.filter(q => q.level === 'both' || q.level === 'middle');
   const totalQuestions = filteredQuestions.length;
 
-  const startTest = () => {
+  const startTest = async () => {
+    const userId = getUserId();
+    const currentGradeBand = RoleValidator.getGradeBandFromGrade('8'); // Default to middle school
+    
+    // Log test start
+    await SessionLogger.logTestStart(userId, currentGradeBand);
+    
     setTestStarted(true);
     setCurrentQuestion(0);
     setSelectedAnswers([]);
@@ -134,15 +141,21 @@ export default function Test() {
     }
   };
 
-  const submitTest = () => {
-    setTestCompleted(true);
-    setShowResults(true);
+  const submitTest = async () => {
+    const userId = getUserId();
+    const currentGradeBand = RoleValidator.getGradeBandFromGrade('8');
     
     const correctAnswers = selectedAnswers.filter((answer, index) => 
       answer === filteredQuestions[index].correct
     ).length;
     
     const score = Math.round((correctAnswers / totalQuestions) * 100);
+    
+    // Log test completion
+    await SessionLogger.logTestComplete(userId, currentGradeBand, score, selectedAnswers);
+    
+    setTestCompleted(true);
+    setShowResults(true);
     
     toast({
       title: "Test Completed!",
