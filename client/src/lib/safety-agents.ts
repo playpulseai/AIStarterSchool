@@ -200,6 +200,7 @@ export class RoleValidator {
       'admin@aistarter.school',
       'teacher@aistarter.school',
       'support@aistarter.school',
+      'derrickshaw@playpulseai.com',
       // Add demo admin emails for testing
       'admin@demo.com',
       'test@admin.com'

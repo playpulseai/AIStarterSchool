@@ -181,6 +181,7 @@ export class AdminService {
       'admin@aistarter.school',
       'teacher@aistarter.school',
       'support@aistarter.school',
+      'derrickshaw@playpulseai.com',
       'admin@demo.com',
       'test@admin.com'
     ];
