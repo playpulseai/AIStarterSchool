@@ -12,6 +12,7 @@ export interface AITeacherRequest {
   gradeBand: 'middle' | 'high';
   lessonStep: number;
   conversationHistory: Array<{ role: 'user' | 'assistant', content: string }>;
+  memoryContext?: string;
 }
 
 export interface AITeacherResponse {

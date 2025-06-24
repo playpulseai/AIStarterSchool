@@ -34,6 +34,7 @@ export default function Lessons() {
   const [isLoading, setIsLoading] = useState(false);
   const [lessonProgress, setLessonProgress] = useState(0);
   const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'ai' | 'student', content: string, timestamp: Date }>>([]);
+  const [studentMemory, setStudentMemory] = useState<any>(null);
 
   // Autonomous AI Teacher System Prompt
   const getSystemPrompt = (grade: 'middle' | 'high', step: number) => {
