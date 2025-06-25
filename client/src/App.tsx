@@ -81,6 +81,11 @@ function Router() {
               <Curriculum />
             </ProtectedRoute>
           </Route>
+          <Route path="/playground">
+            <ProtectedRoute>
+              <Playground />
+            </ProtectedRoute>
+          </Route>
           <Route path="/admin">
             <ProtectedRoute>
               <Admin />
