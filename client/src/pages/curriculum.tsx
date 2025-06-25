@@ -69,23 +69,12 @@ export default function Curriculum() {
   };
 
   const isTopicUnlocked = (topic: CurriculumTopic): boolean => {
-    if (!topic.prerequisites) return true;
-    
-    return topic.prerequisites.every(prereqId => {
-      const prereqProgress = getTopicProgress(prereqId);
-      return prereqProgress?.badgeUnlocked || false;
-    });
+    // All topics are unlocked after access code validation
+    return true;
   };
 
   const startLesson = async (topic: CurriculumTopic, lessonNumber: number) => {
-    if (!isTopicUnlocked(topic)) {
-      toast({
-        variant: "destructive",
-        title: "Topic Locked",
-        description: "Complete prerequisite topics first.",
-      });
-      return;
-    }
+    // All topics are accessible after access code validation
 
     try {
       // 1. Fetch student memory from Firebase

@@ -86,8 +86,7 @@ export const CURRICULUM_TOPICS: CurriculumTopic[] = [
     description: 'Use AI to enhance your learning and academic work',
     icon: '📚',
     totalLessons: 5,
-    difficulty: 'intermediate',
-    prerequisites: ['prompting-basics']
+    difficulty: 'intermediate'
   },
   {
     id: 'automation',
@@ -95,8 +94,7 @@ export const CURRICULUM_TOPICS: CurriculumTopic[] = [
     description: 'Automate everyday tasks with AI-powered workflows',
     icon: '⚡',
     totalLessons: 5,
-    difficulty: 'intermediate',
-    prerequisites: ['prompting-basics']
+    difficulty: 'intermediate'
   },
   {
     id: 'ethics',
@@ -104,8 +102,7 @@ export const CURRICULUM_TOPICS: CurriculumTopic[] = [
     description: 'Learn responsible AI usage and ethical considerations',
     icon: '⚖️',
     totalLessons: 5,
-    difficulty: 'advanced',
-    prerequisites: ['prompting-basics', 'ai-for-school']
+    difficulty: 'advanced'
   }
 ];
 
