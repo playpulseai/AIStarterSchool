@@ -77,6 +77,7 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/features" component={Features} />
           <Route path="/gallery" component={Gallery} />
+          
           <Route path="/dashboard">
             <ProtectedRoute>
               <Dashboard />
@@ -117,7 +118,6 @@ function Router() {
               <Admin />
             </ProtectedRoute>
           </Route>
-          <Route path="/gallery" component={Gallery} />
           <Route component={NotFound} />
         </Switch>
       </main>

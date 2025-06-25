@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ interface AccessCodeModalProps {
 }
 
 export function AccessCodeModal({ isOpen, onClose, onSuccess }: AccessCodeModalProps) {
+  const [, setLocation] = useLocation();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,6 +33,8 @@ export function AccessCodeModal({ isOpen, onClose, onSuccess }: AccessCodeModalP
         localStorage.setItem('investorDemoAccess', 'true');
         onSuccess();
         onClose();
+        // Navigate to dashboard after successful access
+        setLocation('/dashboard');
       }, 1000);
     } else {
       setTimeout(() => {
