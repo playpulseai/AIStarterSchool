@@ -52,16 +52,22 @@ export default function Lessons() {
   }, []);
 
   const loadLessonContent = async (topic: CurriculumTopic, lessonNum: number, grade: 'middle' | 'high') => {
+    console.log('loadLessonContent called', { topic: topic.id, lessonNum, grade });
+    
     try {
       setIsLoading(true);
       
+      console.log('Generating lesson content...');
       // Generate lesson content
       const lesson = await CurriculumGenerator.generateLesson(topic.id, lessonNum, grade);
+      console.log('Lesson generated:', lesson);
       setCurrentLesson(lesson);
       
+      console.log('Fetching student memory...');
       // Fetch student memory from Firebase
       const userId = getUserId();
       const memory = await SmartMemory.getStudentMemory(userId, grade);
+      console.log('Memory fetched:', memory);
       setStudentMemory(memory);
       
       // Generate personalized message
@@ -75,6 +81,7 @@ export default function Lessons() {
         personalizedMsg = 'Welcome to your first AI lesson! Let\'s begin your learning journey.';
       }
       setPersonalizedMessage(personalizedMsg);
+      console.log('Lesson content loaded successfully');
       
     } catch (error) {
       console.error('Failed to load lesson content:', error);
@@ -84,11 +91,14 @@ export default function Lessons() {
         description: "Failed to load lesson content. Please try again.",
       });
     } finally {
+      console.log('Setting isLoading to false in loadLessonContent');
       setIsLoading(false);
     }
   };
 
   const startLesson = async () => {
+    console.log('startLesson called', { currentTopic, currentLesson });
+    
     if (!currentTopic || !currentLesson) {
       toast({
         variant: "destructive",
@@ -101,29 +111,21 @@ export default function Lessons() {
     const userId = getUserId();
     const currentGradeBand = gradeLevel;
     
-    // Role validation
-    if (!RoleValidator.validateGradeBandAccess(currentGradeBand, currentGradeBand)) {
-      toast({
-        variant: "destructive",
-        title: "Access Denied",
-        description: "You don't have access to this grade level content.",
-      });
-      return;
-    }
-
+    console.log('Starting lesson', { userId, currentGradeBand, lessonNumber });
+    
     setLessonActive(true);
     setConversationHistory([]);
     setLessonProgress(20);
     setIsLoading(true);
 
-    // Log lesson start
-    await SessionLogger.logLessonStart(userId, currentGradeBand, lessonNumber);
-
     try {
+      // Log lesson start
+      await SessionLogger.logLessonStart(userId, currentGradeBand, lessonNumber);
+
       // Create personalized AI teacher greeting
       const memoryContext = studentMemory ? SmartMemory.generateSystemPromptInjection(studentMemory) : '';
       
-      const greeting = `Hi! I'm your AI teacher for today! 👋 
+      const greeting = `Hi! I'm your AI teacher for today!
 
 ${personalizedMessage}
 
@@ -140,14 +142,18 @@ Try this: "${currentLesson.promptSuggestion}"
 
 Let's start with a quick question: What do you already know about ${currentTopic.title.toLowerCase()}? Have you tried anything like this before?
 
-Type your answer below and let's begin this exciting lesson! 🚀`;
+Type your answer below and let's begin this exciting lesson!`;
+
+      console.log('Generated greeting, filtering through Guardian Agent');
 
       // Filter AI output through Guardian Agent
       const filterResult = await GuardianAgent.filterOutput(greeting, userId, currentGradeBand);
       const finalGreeting = filterResult.isAllowed ? greeting : filterResult.filteredContent!;
 
+      console.log('Setting AI response and conversation history');
+
       setAiResponse(finalGreeting);
-      setConversationHistory(prev => [...prev, { 
+      setConversationHistory([{ 
         role: 'ai', 
         content: finalGreeting, 
         timestamp: new Date() 
@@ -156,10 +162,7 @@ Type your answer below and let's begin this exciting lesson! 🚀`;
       // Log AI response
       await SessionLogger.logAiResponse(userId, currentGradeBand, lessonNumber, finalGreeting);
       
-      // Auto-scroll to chat
-      setTimeout(() => {
-        chatContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      console.log('Lesson started successfully');
       
     } catch (error) {
       console.error('Failed to start lesson:', error);
@@ -169,6 +172,7 @@ Type your answer below and let's begin this exciting lesson! 🚀`;
         description: "Failed to start lesson. Please try again.",
       });
     } finally {
+      console.log('Setting isLoading to false');
       setIsLoading(false);
     }
   };
