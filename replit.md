@@ -302,6 +302,16 @@ AIStarter School is a modern full-stack web application built for AI-powered edu
 ```
 Changelog:
 - June 24, 2025. Initial setup and Phase 1 completion
+- June 25, 2025. Curriculum system bug fixes and grade band-specific content implementation
+  - Fixed grade band switching logic to properly reload curriculum content
+  - Implemented distinct teaching styles and content for Grades 6-8 vs 9-12
+  - Enhanced AI Ethics with real-world bias cases (COMPAS, Amazon hiring AI)
+  - Upgraded Prompt Engineering with instruction chaining and sensitivity analysis
+  - Added advanced automation case studies for healthcare, manufacturing, finance
+  - Integrated scenario-based ethical dilemmas and group project ideas
+  - Added dynamic grade level UI labels with difficulty and grade band badges
+  - Connected curriculum to regulatory frameworks (EU AI Act, algorithmic auditing)
+  - Enhanced session logging to track grade band in /lesson_sessions/{userId}/{gradeBand}/
 ```
 
 ## User Preferences
