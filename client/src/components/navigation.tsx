@@ -3,10 +3,12 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
+import { GetStartedModal } from './get-started-modal';
 
 export function Navigation() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [getStartedModalOpen, setGetStartedModalOpen] = useState(false);
   const { user, logout } = useAuth();
 
   const isActive = (path: string) => {
@@ -48,28 +50,13 @@ export function Navigation() {
               Gallery
             </Link>
             
-            {/* Show all links regardless of authentication status */}
-            <Link href="/dashboard" className={isActive('/dashboard') ? 'nav-link-active' : 'nav-link'}>
-              Dashboard
-            </Link>
-            <Link href="/curriculum" className={isActive('/curriculum') ? 'nav-link-active' : 'nav-link'}>
-              Curriculum
-            </Link>
-            <Link href="/lessons" className={isActive('/lessons') ? 'nav-link-active' : 'nav-link'}>
-              Lessons
-            </Link>
-            <Link href="/projects" className={isActive('/projects') ? 'nav-link-active' : 'nav-link'}>
-              Projects
-            </Link>
-            <Link href="/gallery" className={isActive('/gallery') ? 'nav-link-active' : 'nav-link'}>
-              Gallery
-            </Link>
-            <Link href="/playground" className={isActive('/playground') ? 'nav-link-active' : 'nav-link'}>
-              Playground
-            </Link>
-            <Link href="/admin" className={isActive('/admin') ? 'nav-link-active' : 'nav-link'}>
-              Admin
-            </Link>
+            <Button 
+              onClick={() => setGetStartedModalOpen(true)}
+              className="bg-primary hover:bg-primary/90 text-white"
+              size="sm"
+            >
+              Get Started
+            </Button>
           </div>
           
           <button 
@@ -101,43 +88,24 @@ export function Navigation() {
                 Gallery
               </Link>
               
-              {user ? (
-                <>
-                  <Link href="/dashboard" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                    Dashboard
-                  </Link>
-                  <Link href="/curriculum" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                    Curriculum
-                  </Link>
-                  <Link href="/test" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                    Test
-                  </Link>
-                  <Link href="/projects" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                    Projects
-                  </Link>
-                  <Link href="/profile" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                    Profile
-                  </Link>
-                  <Button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} variant="outline" size="sm" className="w-full">
-                    Logout
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link href="/login" className="block text-gray-600 dark:text-gray-300" onClick={() => setMobileMenuOpen(false)}>
-                    Login
-                  </Link>
-                  <Link href="/signup">
-                    <Button className="w-full bg-primary hover:bg-primary/90 text-white font-medium" onClick={() => setMobileMenuOpen(false)}>
-                      Get Started
-                    </Button>
-                  </Link>
-                </>
-              )}
+              <Button 
+                onClick={() => { 
+                  setGetStartedModalOpen(true); 
+                  setMobileMenuOpen(false); 
+                }}
+                className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
+              >
+                Get Started
+              </Button>
             </div>
           </div>
         )}
       </div>
+      
+      <GetStartedModal 
+        isOpen={getStartedModalOpen} 
+        onClose={() => setGetStartedModalOpen(false)} 
+      />
     </nav>
   );
 }

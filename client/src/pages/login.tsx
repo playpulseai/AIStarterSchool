@@ -35,7 +35,11 @@ export default function Login() {
         title: "Success",
         description: "Successfully logged in!",
       });
-      setLocation('/dashboard');
+      // In demo mode, don't redirect - show success message only
+      toast({
+        title: "Demo Mode",
+        description: "Login simulation successful! In demo mode, authentication is bypassed.",
+      });
     } catch (error: any) {
       toast({
         variant: "destructive",

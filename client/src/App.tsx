@@ -35,9 +35,31 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // Authentication completely bypassed for demo mode
-  
-  return <>{children}</>;
+  // In demo mode, show soft gate instead of actual login
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center">
+      <div className="max-w-md mx-auto p-8 text-center">
+        <div className="w-16 h-16 primary-gradient rounded-lg flex items-center justify-center mx-auto mb-6">
+          <i className="fas fa-lock text-white text-xl"></i>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          Join AIStarter School
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Access to curriculum, lessons, and AI tools requires an account. Join thousands of students already learning AI skills!
+        </p>
+        <button 
+          onClick={() => window.history.back()}
+          className="w-full bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-lg font-medium transition-colors"
+        >
+          Get Started
+        </button>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+          Demo Mode: Authentication is simulated for preview
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function Router() {
