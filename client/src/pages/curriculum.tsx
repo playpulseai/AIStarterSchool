@@ -20,6 +20,9 @@ import {
   type TestQuestion
 } from '@/lib/curriculum-engine';
 import { SessionLogger, RoleValidator, getUserId } from '@/lib/safety-agents';
+import { SmartMemory } from '@/lib/smart-memory';
+import { Input } from '@/components/ui/input';
+import { Send } from 'lucide-react';
 
 export default function Curriculum() {
   const { user } = useAuth();
@@ -117,6 +120,135 @@ export default function Curriculum() {
         title: "Error",
         description: "Failed to load lesson. Please try again.",
       });
+    }
+  };
+
+  const startInteractiveLesson = async () => {
+    if (!currentLesson || !selectedTopic) return;
+
+    try {
+      setIsLessonActive(true);
+      setIsLoadingAI(true);
+      setConversationHistory([]);
+      
+      const userId = getUserId();
+      
+      // Inject memory context into AI teacher call
+      const memoryContext = studentMemory ? SmartMemory.generateSystemPromptInjection(studentMemory) : '';
+      
+      // Generate the initial AI teacher introduction with memory context
+      const response = await fetch('/api/ai-teacher', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Start lesson: ${currentLesson.title}. ${currentLesson.description}`,
+          gradeBand,
+          lessonStep: currentLesson.stepNumber,
+          conversationHistory: [],
+          memoryContext
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start lesson');
+      }
+
+      const data = await response.json();
+      
+      setConversationHistory([{
+        role: 'ai',
+        content: data.response,
+        timestamp: new Date()
+      }]);
+      
+    } catch (error) {
+      console.error('Failed to start interactive lesson:', error);
+      setConversationHistory([{
+        role: 'ai',
+        content: `Welcome to ${currentLesson.title}! ${currentLesson.description}\n\nLet's start with the basics. ${currentLesson.task}`,
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!currentPrompt.trim() || !currentLesson) return;
+
+    const userMessage = currentPrompt.trim();
+    setCurrentPrompt('');
+    
+    // Add user message to conversation
+    const newHistory = [...conversationHistory, {
+      role: 'student' as const,
+      content: userMessage,
+      timestamp: new Date()
+    }];
+    setConversationHistory(newHistory);
+
+    try {
+      setIsLoadingAI(true);
+      
+      // 4. Save student input to Firebase session logs
+      await SessionLogger.logPromptSubmit(getUserId(), gradeBand, currentLesson.stepNumber, userMessage);
+      
+      // Inject memory context for continued conversation
+      const memoryContext = studentMemory ? SmartMemory.generateSystemPromptInjection(studentMemory) : '';
+      
+      // Get AI response
+      const response = await fetch('/api/ai-teacher', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          gradeBand,
+          lessonStep: currentLesson.stepNumber,
+          conversationHistory: newHistory.map(msg => ({
+            role: msg.role === 'student' ? 'user' : 'assistant',
+            content: msg.content
+          })),
+          memoryContext
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+      
+      // Log AI response
+      await SessionLogger.logAiResponse(getUserId(), gradeBand, currentLesson.stepNumber, data.response);
+      
+      // Add AI response to conversation
+      setConversationHistory(prev => [...prev, {
+        role: 'ai',
+        content: data.response,
+        timestamp: new Date()
+      }]);
+      
+      // 5. Update student memory after interaction
+      await SmartMemory.logInteraction({
+        askedForExamples: userMessage.toLowerCase().includes('example'),
+        neededEncouragement: false,
+        usedVaguePrompts: userMessage.length < 20,
+        responseTime: 5000
+      });
+      
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      setConversationHistory(prev => [...prev, {
+        role: 'ai',
+        content: 'I apologize, but I encountered an error. Please try again or rephrase your question.',
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoadingAI(false);
     }
   };
 
@@ -420,6 +552,15 @@ export default function Curriculum() {
                 </DialogHeader>
                 
                 <div className="space-y-6">
+                  {/* 2. Display personalized message */}
+                  {personalizedMessage && (
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                      <p className="text-green-800 dark:text-green-300 text-sm">
+                        {personalizedMessage}
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <h4 className="font-semibold mb-2">What you'll learn:</h4>
                     <p className="text-gray-600 dark:text-gray-400">{currentLesson.description}</p>
@@ -436,16 +577,126 @@ export default function Curriculum() {
                       {currentLesson.promptSuggestion}
                     </p>
                   </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button onClick={completeLesson} className="flex-1">
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Mark Complete
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsLessonDialogOpen(false)}>
-                      Close
-                    </Button>
-                  </div>
+
+                  {!isLessonActive ? (
+                    <div className="flex space-x-2">
+                      <Button onClick={startInteractiveLesson} className="flex-1">
+                        <PlayCircle className="mr-2 h-4 w-4" />
+                        Start Learning
+                      </Button>
+                      <Button onClick={completeLesson} variant="outline">
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Mark Complete
+                      </Button>
+                      <Button variant="outline" onClick={() => setIsLessonDialogOpen(false)}>
+                        Close
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Interactive AI Teacher Chat */}
+                      <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
+                        <h4 className="font-semibold mb-3">AI Teacher Chat</h4>
+                        
+                        <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
+                          {conversationHistory.map((message, index) => (
+                            <div key={index} className={`flex ${message.role === 'student' ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-sm p-3 rounded-lg text-sm ${
+                                message.role === 'student' 
+                                  ? 'bg-blue-500 text-white' 
+                                  : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border'
+                              }`}>
+                                <p className="whitespace-pre-wrap">{message.content}</p>
+                                <p className="text-xs opacity-70 mt-1">
+                                  {message.timestamp.toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          {isLoadingAI && (
+                            <div className="flex justify-start">
+                              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border">
+                                <p className="text-gray-600 dark:text-gray-300 text-sm">AI is typing...</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 3. Prompt Activity Section */}
+                        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded">
+                          <h5 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2 text-sm">
+                            Practice: Compare Vague vs Detailed Prompts
+                          </h5>
+                          <div className="space-y-2">
+                            <Input
+                              value={promptActivity}
+                              onChange={(e) => setPromptActivity(e.target.value)}
+                              placeholder="Write your prompt here..."
+                              className="text-sm"
+                            />
+                            <div className="flex space-x-2">
+                              <Button 
+                                onClick={() => {
+                                  if (promptActivity.trim()) {
+                                    setShowPromptComparison(true);
+                                    setCurrentPrompt(promptActivity);
+                                  }
+                                }}
+                                disabled={!promptActivity.trim()}
+                                size="sm"
+                                variant="outline"
+                              >
+                                Analyze My Prompt
+                              </Button>
+                            </div>
+                            {showPromptComparison && (
+                              <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border text-xs">
+                                <p className="text-gray-600 dark:text-gray-400">
+                                  <strong>Your prompt:</strong> {promptActivity}
+                                </p>
+                                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                                  <strong>Analysis:</strong> {promptActivity.length < 20 ? 'Too vague - try adding more details!' : 'Good detail level!'}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Input
+                            value={currentPrompt}
+                            onChange={(e) => setCurrentPrompt(e.target.value)}
+                            placeholder="Ask a question or share your thoughts..."
+                            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                            disabled={isLoadingAI}
+                            className="flex-1 text-sm"
+                          />
+                          <Button onClick={sendMessage} disabled={isLoadingAI || !currentPrompt.trim()} size="sm">
+                            <Send className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* 6. Summary Feedback */}
+                      {summaryFeedback && (
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+                          <p className="text-green-800 dark:text-green-300 font-medium text-sm">
+                            {summaryFeedback}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex space-x-2">
+                        <Button onClick={completeLesson} className="flex-1">
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Complete Lesson
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsLessonDialogOpen(false)}>
+                          Close
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             )}
