@@ -40,14 +40,32 @@ export default function Lessons() {
     const lesson = urlParams.get('lesson');
     const grade = urlParams.get('grade') as 'middle' | 'high';
     
+    console.log('URL params:', { topicId, lesson, grade });
+    
     if (topicId && lesson && grade) {
-      const topic = CURRICULUM_TOPICS.find(t => t.id === topicId);
+      // Map legacy topic IDs to current ones
+      const topicIdMap: Record<string, string> = {
+        'ai-prompting': 'prompting-basics',
+        'ai-automation': 'automation',
+        'ai-ethics': 'ethics'
+      };
+      
+      const actualTopicId = topicIdMap[topicId] || topicId;
+      const topic = CURRICULUM_TOPICS.find(t => t.id === actualTopicId);
+      console.log('Found topic:', topic, 'for ID:', actualTopicId);
+      
       if (topic) {
         setCurrentTopic(topic);
         setLessonNumber(parseInt(lesson));
         setGradeLevel(grade);
         loadLessonContent(topic, parseInt(lesson), grade);
+      } else {
+        console.error('Topic not found:', topicId, 'mapped to:', actualTopicId);
+        setIsLoading(false);
       }
+    } else {
+      console.log('Missing URL parameters, setting loading to false');
+      setIsLoading(false);
     }
   }, []);
 
@@ -338,6 +356,24 @@ Type your answer below and let's begin this exciting lesson!`;
   }
 
   // Show error state if no topic is loaded
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Loading Lesson Content...
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Preparing your personalized AI lesson experience
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentTopic || !currentLesson) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
