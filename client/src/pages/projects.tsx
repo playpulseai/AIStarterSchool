@@ -48,6 +48,18 @@ interface AIGeneration {
   };
 }
 
+interface PlaygroundProject {
+  id: string;
+  userId: string;
+  title: string;
+  toolType: 'logo' | 'story' | 'chatbot';
+  outputText: string;
+  imageUrl?: string;
+  prompt: string;
+  createdAt: Date;
+  status: 'completed' | 'in-progress';
+}
+
 interface StudentBadge {
   topicId: string;
   topicTitle: string;
