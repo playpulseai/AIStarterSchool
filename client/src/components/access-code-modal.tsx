@@ -123,7 +123,7 @@ export function AccessCodeModal({ isOpen, onClose, onSuccess }: AccessCodeModalP
 
         <div className="text-center mt-4">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Demo code: 2025 (for demonstration purposes)
+            Demo code: <span className="font-mono font-semibold">2025</span> (for demonstration purposes)
           </p>
         </div>
       </DialogContent>
