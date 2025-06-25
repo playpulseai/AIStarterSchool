@@ -121,18 +121,12 @@ export class CurriculumGenerator {
         description: string;
         task: string;
         promptSuggestion: string;
-      }>('/api/generate-curriculum-lesson', {
-        method: 'POST',
-        body: JSON.stringify({
-          topicId,
-          topicTitle: topic.title,
-          stepNumber,
-          gradeBand,
-          totalSteps: topic.totalLessons
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      }>('/api/generate-curriculum-lesson', 'POST', {
+        topicId,
+        topicTitle: topic.title,
+        stepNumber,
+        gradeBand,
+        totalSteps: topic.totalLessons
       });
 
       const lesson: Lesson = {
@@ -367,16 +361,10 @@ export class ProgressTracker {
 export class TestGenerator {
   static async generateTest(topicId: string, gradeBand: 'middle' | 'high'): Promise<TestQuestion[]> {
     try {
-      const response = await apiRequest<{ questions: TestQuestion[] }>('/api/generate-test', {
-        method: 'POST',
-        body: JSON.stringify({
-          topicId,
-          gradeBand,
-          questionCount: gradeBand === 'middle' ? 3 : 5
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const response = await apiRequest<{ questions: TestQuestion[] }>('/api/generate-test', 'POST', {
+        topicId,
+        gradeBand,
+        questionCount: gradeBand === 'middle' ? 3 : 5
       });
 
       return response.questions;
