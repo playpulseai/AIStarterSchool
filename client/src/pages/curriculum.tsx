@@ -36,6 +36,15 @@ export default function Curriculum() {
   const [showTestResults, setShowTestResults] = useState(false);
   const [testScore, setTestScore] = useState(0);
   const [gradeBand, setGradeBand] = useState<'middle' | 'high'>('middle');
+  const [studentMemory, setStudentMemory] = useState<any>(null);
+  const [personalizedMessage, setPersonalizedMessage] = useState('');
+  const [promptActivity, setPromptActivity] = useState('');
+  const [showPromptComparison, setShowPromptComparison] = useState(false);
+  const [summaryFeedback, setSummaryFeedback] = useState('');
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'ai' | 'student', content: string, timestamp: Date }>>([]);
+  const [currentPrompt, setCurrentPrompt] = useState('');
+  const [isLessonActive, setIsLessonActive] = useState(false);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
 
   useEffect(() => {
     loadProgressData();
@@ -75,13 +84,31 @@ export default function Curriculum() {
     }
 
     try {
+      // 1. Fetch student memory from Firebase
+      const userId = getUserId();
+      const memory = await SmartMemory.getStudentMemory(userId, gradeBand);
+      setStudentMemory(memory);
+      
+      // 2. Generate personalized message
+      let personalizedMsg = '';
+      if (memory.lastLessonTopic && memory.lastLessonTopic !== topic.id) {
+        const lastTopicTitle = CURRICULUM_TOPICS.find(t => t.id === memory.lastLessonTopic)?.title || memory.lastLessonTopic;
+        personalizedMsg = `Welcome back! Last time you studied ${lastTopicTitle}. Let's build on that.`;
+      } else if (memory.totalLessonsCompleted > 0) {
+        personalizedMsg = `Great to see you continuing your AI learning journey! You've completed ${memory.totalLessonsCompleted} lessons so far.`;
+      } else {
+        personalizedMsg = 'Welcome to your first AI lesson! Let\'s begin your learning journey.';
+      }
+      setPersonalizedMessage(personalizedMsg);
+      
       const lesson = await CurriculumGenerator.generateLesson(topic.id, lessonNumber, gradeBand);
       setCurrentLesson(lesson);
       setSelectedTopic(topic);
       setIsLessonDialogOpen(true);
+      setConversationHistory([]);
+      setIsLessonActive(false);
 
       // Log lesson start
-      const userId = getUserId();
       await SessionLogger.logLessonStart(userId, gradeBand, lessonNumber);
     } catch (error) {
       console.error('Failed to start lesson:', error);
