@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +48,7 @@ export default function Curriculum() {
   const [currentPrompt, setCurrentPrompt] = useState('');
   const [isLessonActive, setIsLessonActive] = useState(false);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadProgressData();
@@ -180,6 +181,13 @@ export default function Curriculum() {
         content: aiResponse,
         timestamp: new Date()
       }]);
+
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 100);
       
       // Log AI response to session logs at /session_logs/{userId}/{timestamp}
       await SessionLogger.logAiResponse(userId, gradeBand, currentLesson.stepNumber, aiResponse);
@@ -263,6 +271,13 @@ export default function Curriculum() {
         content: data.response,
         timestamp: new Date()
       }]);
+
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+      }, 100);
       
       // 7. Update memory with interaction data and inferred learning style
       const learningStyleIndicators = {
@@ -720,7 +735,7 @@ export default function Curriculum() {
                       <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
                         <h4 className="font-semibold mb-3">AI Teacher Chat</h4>
                         
-                        <div className="space-y-3 max-h-80 overflow-y-auto mb-4">
+                        <div className="space-y-3 max-h-80 overflow-y-auto mb-4" ref={chatContainerRef}>
                           {conversationHistory.map((message, index) => (
                             <div key={index} className={`flex ${message.role === 'student' ? 'justify-end' : 'justify-start'}`}>
                               <div className={`max-w-sm p-3 rounded-lg text-sm ${
@@ -794,7 +809,12 @@ export default function Curriculum() {
                               value={currentPrompt}
                               onChange={(e) => setCurrentPrompt(e.target.value)}
                               placeholder="Share your attempt, ask questions, or provide your answer..."
-                              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  sendMessage();
+                                }
+                              }}
                               disabled={isLoadingAI}
                               className="flex-1 text-sm"
                             />
