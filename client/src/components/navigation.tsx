@@ -56,7 +56,7 @@ export function Navigation() {
               className="bg-primary hover:bg-primary/90 text-white"
               size="sm"
             >
-              Access Demo (2025)
+              Access Demo
             </Button>
           </div>
           
@@ -96,7 +96,7 @@ export function Navigation() {
                 }}
                 className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
               >
-                Access Demo (2025)
+                Access Demo
               </Button>
             </div>
           </div>
