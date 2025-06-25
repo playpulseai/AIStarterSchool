@@ -13,6 +13,18 @@ export interface AITeacherRequest {
   lessonStep: number;
   conversationHistory: Array<{ role: 'user' | 'assistant', content: string }>;
   memoryContext?: string;
+  studentMemory?: {
+    lastLessonTopic?: string;
+    missedTestConcepts?: string[];
+    preferredLearningStyle?: string;
+    strengthAreas?: string[];
+    weaknessAreas?: string[];
+    interactionPatterns?: {
+      asksForExamples: boolean;
+      needsEncouragement: boolean;
+      prefersStepByStep: boolean;
+    };
+  };
 }
 
 export interface AITeacherResponse {

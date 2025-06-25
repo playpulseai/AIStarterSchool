@@ -133,21 +133,36 @@ export default function Curriculum() {
       
       const userId = getUserId();
       
-      // Inject memory context into AI teacher call
-      const memoryContext = studentMemory ? SmartMemory.generateSystemPromptInjection(studentMemory) : '';
+      // 1. Fetch student's memory from Firebase at /student_memory/{userId}
+      const memory = await SmartMemory.getStudentMemory(userId, gradeBand);
+      setStudentMemory(memory);
       
-      // Generate the initial AI teacher introduction with memory context
+      // 2. Inject memory into AI system prompt with specific fields
+      const memoryInjection = {
+        lastLessonTopic: memory.lastLessonTopic,
+        missedTestConcepts: memory.missedTestConcepts,
+        preferredLearningStyle: memory.preferredLearningStyle,
+        strengthAreas: memory.strengthAreas,
+        weaknessAreas: memory.weaknessAreas,
+        interactionPatterns: memory.interactionPatterns
+      };
+      
+      // 6. Log lesson start to /session_logs/{userId}
+      await SessionLogger.logLessonStart(userId, gradeBand, currentLesson.stepNumber);
+      
+      // 3. Start AI lesson using OpenAI with memory context
       const response = await fetch('/api/ai-teacher', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: `Start lesson: ${currentLesson.title}. ${currentLesson.description}`,
+          message: `Start interactive lesson: ${currentLesson.title}. Description: ${currentLesson.description}. Task: ${currentLesson.task}`,
           gradeBand,
           lessonStep: currentLesson.stepNumber,
           conversationHistory: [],
-          memoryContext
+          memoryContext: SmartMemory.generateSystemPromptInjection(memory),
+          studentMemory: memoryInjection
         })
       });
 
@@ -157,17 +172,32 @@ export default function Curriculum() {
 
       const data = await response.json();
       
+      // 4. Render first lesson step as voice + text
+      const initialMessage = `🎓 ${data.response}\n\n📝 Your task: ${currentLesson.task}\n\n💡 Try this approach: ${currentLesson.promptSuggestion}`;
+      
       setConversationHistory([{
         role: 'ai',
-        content: data.response,
+        content: initialMessage,
         timestamp: new Date()
       }]);
       
+      // Log AI response to session logs
+      await SessionLogger.logAiResponse(userId, gradeBand, currentLesson.stepNumber, initialMessage);
+      
     } catch (error) {
       console.error('Failed to start interactive lesson:', error);
+      // Fallback lesson content
+      const fallbackMessage = `Welcome to ${currentLesson.title}! 
+
+${currentLesson.description}
+
+Your task: ${currentLesson.task}
+
+Let's start by having you try the suggested approach. Please share your attempt in the input field below.`;
+      
       setConversationHistory([{
         role: 'ai',
-        content: `Welcome to ${currentLesson.title}! ${currentLesson.description}\n\nLet's start with the basics. ${currentLesson.task}`,
+        content: fallbackMessage,
         timestamp: new Date()
       }]);
     } finally {
@@ -192,13 +222,15 @@ export default function Curriculum() {
     try {
       setIsLoadingAI(true);
       
-      // 4. Save student input to Firebase session logs
-      await SessionLogger.logPromptSubmit(getUserId(), gradeBand, currentLesson.stepNumber, userMessage);
+      const userId = getUserId();
       
-      // Inject memory context for continued conversation
+      // 6. Log all interaction data to /session_logs/{userId}
+      await SessionLogger.logPromptSubmit(userId, gradeBand, currentLesson.stepNumber, userMessage);
+      
+      // Continue AI conversation with memory context
       const memoryContext = studentMemory ? SmartMemory.generateSystemPromptInjection(studentMemory) : '';
       
-      // Get AI response
+      // Get AI response with full context
       const response = await fetch('/api/ai-teacher', {
         method: 'POST',
         headers: {
@@ -212,7 +244,12 @@ export default function Curriculum() {
             role: msg.role === 'student' ? 'user' : 'assistant',
             content: msg.content
           })),
-          memoryContext
+          memoryContext,
+          studentMemory: studentMemory ? {
+            lastLessonTopic: studentMemory.lastLessonTopic,
+            missedTestConcepts: studentMemory.missedTestConcepts,
+            preferredLearningStyle: studentMemory.preferredLearningStyle
+          } : null
         })
       });
 
@@ -222,8 +259,8 @@ export default function Curriculum() {
 
       const data = await response.json();
       
-      // Log AI response
-      await SessionLogger.logAiResponse(getUserId(), gradeBand, currentLesson.stepNumber, data.response);
+      // Log AI response to session logs
+      await SessionLogger.logAiResponse(userId, gradeBand, currentLesson.stepNumber, data.response);
       
       // Add AI response to conversation
       setConversationHistory(prev => [...prev, {
@@ -232,13 +269,26 @@ export default function Curriculum() {
         timestamp: new Date()
       }]);
       
-      // 5. Update student memory after interaction
+      // 7. Update memory with interaction data and inferred learning style
+      const learningStyleIndicators = {
+        requestedVisuals: userMessage.toLowerCase().includes('visual') || userMessage.toLowerCase().includes('image') || userMessage.toLowerCase().includes('picture'),
+        usedVoice: false, // Would be true if voice input was used
+        preferredText: userMessage.length > 50 // Longer responses indicate text preference
+      };
+      
       await SmartMemory.logInteraction({
         askedForExamples: userMessage.toLowerCase().includes('example'),
-        neededEncouragement: false,
+        neededEncouragement: conversationHistory.length < 3,
         usedVaguePrompts: userMessage.length < 20,
         responseTime: 5000
       });
+      
+      // Update learning style if indicators are strong
+      if (learningStyleIndicators.requestedVisuals) {
+        await SmartMemory.updateStudentMemory({
+          learningStyleIndicators
+        }, userId);
+      }
       
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -257,13 +307,73 @@ export default function Curriculum() {
 
     try {
       const userId = getUserId();
-      await ProgressTracker.updateProgress(userId, selectedTopic.id, currentLesson.stepNumber);
+      
+      // Update progress tracking
+      await ProgressTracker.updateProgress(userId, currentLesson.topicId, currentLesson.stepNumber);
+      
+      // 7. Update memory with lesson completion and inferred learning style
+      const interactionAnalysis = {
+        askedForExamples: conversationHistory.some(msg => 
+          msg.role === 'student' && msg.content.toLowerCase().includes('example')
+        ),
+        neededEncouragement: conversationHistory.length < 3,
+        usedVaguePrompts: conversationHistory.some(msg => 
+          msg.role === 'student' && msg.content.length < 20
+        ),
+        responseTime: 5000
+      };
+      
+      // Infer learning style from conversation patterns
+      const studentMessages = conversationHistory.filter(msg => msg.role === 'student');
+      let inferredLearningStyle = studentMemory?.preferredLearningStyle || 'text';
+      
+      if (studentMessages.some(msg => msg.content.toLowerCase().includes('visual') || msg.content.toLowerCase().includes('image'))) {
+        inferredLearningStyle = 'visual';
+      } else if (studentMessages.some(msg => msg.content.toLowerCase().includes('example'))) {
+        inferredLearningStyle = 'examples';
+      } else if (studentMessages.reduce((total, msg) => total + msg.content.length, 0) / studentMessages.length > 50) {
+        inferredLearningStyle = 'text';
+      }
+      
+      await SmartMemory.updateStudentMemory({
+        lessonTopic: currentLesson.topicId,
+        interactionData: interactionAnalysis,
+        learningStyleIndicators: {
+          requestedVisuals: studentMessages.some(msg => msg.content.toLowerCase().includes('visual')),
+          usedVoice: false,
+          preferredText: studentMessages.length > 0 && studentMessages.reduce((total, msg) => total + msg.content.length, 0) / studentMessages.length > 30
+        }
+      }, userId);
+      
+      // 8. Display personalized feedback line at the bottom
+      let personalizedFeedback = "Great work completing this lesson!";
+      
+      if (studentMemory) {
+        const currentVaguePrompts = conversationHistory.filter(msg => 
+          msg.role === 'student' && msg.content.length < 20
+        ).length;
+        const previousPromptIssues = studentMemory.frequentPromptMistakes?.length || 0;
+        
+        if (currentVaguePrompts === 0 && previousPromptIssues > 0) {
+          personalizedFeedback = "Excellent! You used detailed prompts throughout this lesson. Your prompt quality has improved significantly!";
+        } else if (conversationHistory.length > 6) {
+          personalizedFeedback = "Outstanding engagement! You're actively participating and asking great questions. Keep up the curiosity!";
+        } else if (conversationHistory.some(msg => msg.role === 'student' && msg.content.toLowerCase().includes('example'))) {
+          personalizedFeedback = "Great job asking for examples! This shows you're thinking critically about the concepts.";
+        } else if (inferredLearningStyle === 'visual') {
+          personalizedFeedback = "I noticed you prefer visual learning. I'll include more visual examples in future lessons!";
+        } else if (studentMemory.totalLessonsCompleted > 3) {
+          personalizedFeedback = `You're making consistent progress! You've completed ${studentMemory.totalLessonsCompleted + 1} lessons. Your dedication is paying off!`;
+        }
+      }
+      
+      setSummaryFeedback(personalizedFeedback);
+      
       await loadProgressData();
-      setIsLessonDialogOpen(false);
       
       toast({
         title: "Lesson Complete!",
-        description: `You've completed ${currentLesson.title}`,
+        description: `You've completed "${currentLesson.title}"`,
       });
 
       // Check if all lessons are complete to show test option
@@ -274,8 +384,24 @@ export default function Curriculum() {
           description: `You can now take the ${selectedTopic.title} test to earn your badge.`,
         });
       }
+      
+      // Show feedback for a moment before closing
+      setTimeout(() => {
+        setIsLessonDialogOpen(false);
+        setCurrentLesson(null);
+        setSelectedTopic(null);
+        setIsLessonActive(false);
+        setSummaryFeedback('');
+        setConversationHistory([]);
+      }, 3000);
+      
     } catch (error) {
       console.error('Failed to complete lesson:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to complete lesson. Please try again.",
+      });
     }
   };
 
@@ -662,18 +788,28 @@ export default function Curriculum() {
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
-                          <Input
-                            value={currentPrompt}
-                            onChange={(e) => setCurrentPrompt(e.target.value)}
-                            placeholder="Ask a question or share your thoughts..."
-                            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                            disabled={isLoadingAI}
-                            className="flex-1 text-sm"
-                          />
-                          <Button onClick={sendMessage} disabled={isLoadingAI || !currentPrompt.trim()} size="sm">
-                            <Send className="h-3 w-3" />
-                          </Button>
+                        {/* 5. Input field and Submit button for task completion */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Complete the lesson task:
+                          </label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={currentPrompt}
+                              onChange={(e) => setCurrentPrompt(e.target.value)}
+                              placeholder="Share your attempt, ask questions, or provide your answer..."
+                              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                              disabled={isLoadingAI}
+                              className="flex-1 text-sm"
+                            />
+                            <Button onClick={sendMessage} disabled={isLoadingAI || !currentPrompt.trim()} size="sm">
+                              <Send className="h-3 w-3" />
+                              Submit
+                            </Button>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Press Enter to submit or use the Submit button
+                          </p>
                         </div>
                       </div>
 
