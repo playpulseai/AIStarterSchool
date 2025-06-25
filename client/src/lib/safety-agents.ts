@@ -1,7 +1,8 @@
 import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import app from './firebase';
 
-const db = getFirestore(app);
+// Handle null app for bypass mode
+const db = app ? getFirestore(app) : null;
 
 // Profanity and inappropriate content filter
 const BLOCKED_WORDS = [
