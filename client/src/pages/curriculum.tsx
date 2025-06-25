@@ -172,34 +172,29 @@ export default function Curriculum() {
 
       const data = await response.json();
       
-      // 4. Render first lesson step as voice + text
-      const initialMessage = `🎓 ${data.response}\n\n📝 Your task: ${currentLesson.task}\n\n💡 Try this approach: ${currentLesson.promptSuggestion}`;
+      // 4. Render first lesson step as voice + text with personalized AI response
+      const aiResponse = data.response;
       
       setConversationHistory([{
         role: 'ai',
-        content: initialMessage,
+        content: aiResponse,
         timestamp: new Date()
       }]);
       
-      // Log AI response to session logs
-      await SessionLogger.logAiResponse(userId, gradeBand, currentLesson.stepNumber, initialMessage);
+      // Log AI response to session logs at /session_logs/{userId}/{timestamp}
+      await SessionLogger.logAiResponse(userId, gradeBand, currentLesson.stepNumber, aiResponse);
       
     } catch (error) {
       console.error('Failed to start interactive lesson:', error);
-      // Fallback lesson content
-      const fallbackMessage = `Welcome to ${currentLesson.title}! 
-
-${currentLesson.description}
-
-Your task: ${currentLesson.task}
-
-Let's start by having you try the suggested approach. Please share your attempt in the input field below.`;
       
-      setConversationHistory([{
-        role: 'ai',
-        content: fallbackMessage,
-        timestamp: new Date()
-      }]);
+      // Show error toast instead of fallback content
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Unable to start AI lesson. Please check your connection and try again.",
+      });
+      
+      setIsLessonActive(false);
     } finally {
       setIsLoadingAI(false);
     }
@@ -309,7 +304,7 @@ Let's start by having you try the suggested approach. Please share your attempt 
       const userId = getUserId();
       
       // Update progress tracking
-      await ProgressTracker.updateProgress(userId, currentLesson.topicId, currentLesson.stepNumber);
+      await ProgressTracker.updateProgress(userId, selectedTopic.id, currentLesson.stepNumber);
       
       // 7. Update memory with lesson completion and inferred learning style
       const interactionAnalysis = {
@@ -335,8 +330,9 @@ Let's start by having you try the suggested approach. Please share your attempt 
         inferredLearningStyle = 'text';
       }
       
+      // 4. Update memory with lesson completion data at /student_memory/{userId}
       await SmartMemory.updateStudentMemory({
-        lessonTopic: currentLesson.topicId,
+        lessonTopic: selectedTopic.id,
         interactionData: interactionAnalysis,
         learningStyleIndicators: {
           requestedVisuals: studentMessages.some(msg => msg.content.toLowerCase().includes('visual')),
