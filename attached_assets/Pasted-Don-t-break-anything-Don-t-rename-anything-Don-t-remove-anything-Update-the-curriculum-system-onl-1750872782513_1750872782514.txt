@@ -1,0 +1,64 @@
+Don't break anything. Don't rename anything. Don't remove anything. Update the curriculum system only. Log all changes to the changelog.
+
+---
+
+🎯 Task:
+Add the following **Lesson 2: Creating Your First AI Artwork** to the curriculum flow.
+
+It should be:
+• Selectable under the Curriculum page
+• Fully functional with "Start Learning" interaction
+• Connected to session logging and lesson memory
+• Uses interactive prompts and captures student input where appropriate
+• Concludes with 3 quiz questions and saves progress
+
+---
+
+📘 Lesson 2 Content:
+
+Title: Creating Your First AI Artwork
+
+**Using DALL-E or DeepArt:**
+1. Choose Your Tool: Decide whether you want to try DALL-E or DeepArt.
+2. Write a Prompt: Write a sentence describing the image you want. Be as descriptive as possible!
+   - Example: "A cat wearing a wizard hat casting spells in a library."
+3. Experiment with Style: If you're using DeepArt, choose a style (e.g., Van Gogh, Picasso).
+
+**Task:**
+Try creating your first piece of digital artwork using your chosen tool.
+
+**Feedback Prompt:**
+Once you’ve created your image, share your experience. What did you find surprising or interesting?
+
+---
+
+### Step 3: Experimenting with Prompts
+
+**Refining Your Prompts:**
+- Be Specific: The more details you provide, the more the AI can capture your vision.
+- Experiment: Try changing words to see how it affects the image.
+
+**Example:**
+- Vague: "A mountain"
+- Detailed: "A snow-capped mountain under a starry night sky with a glowing moon."
+
+**Task:**
+Create another image using a new prompt. Compare it with your first one.
+
+**Comprehension Check:**
+How does changing the details of your prompt change the image the AI generates?
+
+---
+
+📋 Final Quiz Questions:
+
+1. What are AI art tools used for?
+2. How can you make your prompts more effective for generating detailed images?
+3. What was one thing you learned about how AI interprets prompts?
+
+---
+
+All responses should be captured, and the session should be logged under:
+`/lesson_sessions/{userId}/lesson2_art_creation`
+
+Test thoroughly. Log success. Confirm completion with ✅.
