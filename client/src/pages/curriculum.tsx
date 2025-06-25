@@ -525,19 +525,29 @@ export default function Curriculum() {
           </p>
           
           {/* Grade Level Toggle */}
-          <div className="flex space-x-4 mb-6">
-            <Button
-              variant={gradeBand === 'middle' ? 'default' : 'outline'}
-              onClick={() => setGradeBand('middle')}
-            >
-              Grades 6-8
-            </Button>
-            <Button
-              variant={gradeBand === 'high' ? 'default' : 'outline'}
-              onClick={() => setGradeBand('high')}
-            >
-              Grades 9-12
-            </Button>
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-6">
+            <div className="flex space-x-4">
+              <Button
+                variant={gradeBand === 'middle' ? 'default' : 'outline'}
+                onClick={() => setGradeBand('middle')}
+                className="flex-1 sm:flex-none"
+              >
+                Grades 6-8
+              </Button>
+              <Button
+                variant={gradeBand === 'high' ? 'default' : 'outline'}
+                onClick={() => setGradeBand('high')}
+                className="flex-1 sm:flex-none"
+              >
+                Grades 9-12
+              </Button>
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+              <span>Currently viewing: </span>
+              <Badge variant="outline" className="ml-2 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                {gradeBand === 'middle' ? 'Middle School (Ages 11-14)' : 'High School (Ages 14-18)'}
+              </Badge>
+            </div>
           </div>
         </div>
 
@@ -559,9 +569,12 @@ export default function Curriculum() {
                       <div className="text-3xl">{topic.icon}</div>
                       <div>
                         <CardTitle className="text-lg">{topic.title}</CardTitle>
-                        <div className="flex items-center space-x-2 mt-1">
+                        <div className="flex items-center space-x-2 mt-1 flex-wrap">
                           <Badge variant={topic.difficulty === 'beginner' ? 'default' : topic.difficulty === 'intermediate' ? 'secondary' : 'outline'}>
                             {topic.difficulty}
+                          </Badge>
+                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                            {gradeBand === 'middle' ? 'Grades 6-8' : 'Grades 9-12'}
                           </Badge>
                           {hasEarnedBadge && (
                             <Badge className="bg-success text-success-foreground">
@@ -685,8 +698,18 @@ export default function Curriculum() {
                     <span className="text-2xl">{selectedTopic.icon}</span>
                     <span>{currentLesson.title}</span>
                   </DialogTitle>
-                  <DialogDescription>
-                    Lesson {currentLesson.stepNumber} of {selectedTopic.totalLessons} • {currentLesson.estimatedTime} minutes
+                  <DialogDescription className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span>Lesson {currentLesson.stepNumber} of {selectedTopic.totalLessons} • {currentLesson.estimatedTime} minutes</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={selectedTopic.difficulty === 'beginner' ? 'default' : selectedTopic.difficulty === 'intermediate' ? 'secondary' : 'outline'} className="text-xs">
+                        {selectedTopic.difficulty}
+                      </Badge>
+                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-xs">
+                        {gradeBand === 'middle' ? 'Grades 6-8' : 'Grades 9-12'}
+                      </Badge>
+                    </div>
                   </DialogDescription>
                 </DialogHeader>
                 
@@ -867,8 +890,16 @@ export default function Curriculum() {
                     <Trophy className="h-5 w-5 text-accent" />
                     <span>{selectedTopic.title} Test</span>
                   </DialogTitle>
-                  <DialogDescription>
-                    Question {currentTestQuestion + 1} of {testQuestions.length}
+                  <DialogDescription className="space-y-2">
+                    <div>Question {currentTestQuestion + 1} of {testQuestions.length}</div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={selectedTopic.difficulty === 'beginner' ? 'default' : selectedTopic.difficulty === 'intermediate' ? 'secondary' : 'outline'} className="text-xs">
+                        {selectedTopic.difficulty}
+                      </Badge>
+                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-xs">
+                        {gradeBand === 'middle' ? 'Grades 6-8' : 'Grades 9-12'}
+                      </Badge>
+                    </div>
                   </DialogDescription>
                 </DialogHeader>
                 
