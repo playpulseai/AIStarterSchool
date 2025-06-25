@@ -32,11 +32,6 @@ export default function Login() {
     try {
       await login(email, password);
       toast({
-        title: "Success",
-        description: "Successfully logged in!",
-      });
-      // In demo mode, don't redirect - show success message only
-      toast({
         title: "Demo Mode",
         description: "Login simulation successful! In demo mode, authentication is bypassed.",
       });

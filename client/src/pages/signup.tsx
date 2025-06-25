@@ -1,38 +1,24 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'wouter';
-import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserPlus, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Signup() {
-  const [, setLocation] = useLocation();
-  const { signup, loading, error } = useAuth();
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    gradeLevel: '',
-    password: '',
-    confirmPassword: '',
-    acceptTerms: false
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [grade, setGrade] = useState('');
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    if (!formData.fullName || !formData.email || !formData.gradeLevel || 
-        !formData.password || !formData.confirmPassword) {
+    if (!email || !password || !confirmPassword || !grade) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -41,7 +27,7 @@ export default function Signup() {
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -50,38 +36,16 @@ export default function Signup() {
       return;
     }
 
-    if (formData.password.length < 6) {
+    setLoading(true);
+    
+    // Demo mode simulation
+    setTimeout(() => {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Password must be at least 6 characters long.",
+        title: "Demo Mode",
+        description: "Account creation simulated! In demo mode, authentication is bypassed.",
       });
-      return;
-    }
-
-    if (!formData.acceptTerms) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please accept the terms of service.",
-      });
-      return;
-    }
-
-    try {
-      await signup(formData.email, formData.password);
-      toast({
-        title: "Success",
-        description: "Account created successfully!",
-      });
-      setLocation('/dashboard');
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Signup Failed",
-        description: error.message || "An error occurred during signup.",
-      });
-    }
+      setLoading(false);
+    }, 1000);
   };
 
   return (
@@ -102,108 +66,77 @@ export default function Signup() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white dark:bg-card py-8 px-4 shadow-sm rounded-2xl sm:px-10 border border-gray-200 dark:border-border">
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Demo Mode:</strong> This is a demonstration. Account creation is simulated for preview purposes.
+            </AlertDescription>
+          </Alert>
           
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <Label htmlFor="full-name">Full name</Label>
+              <Label htmlFor="email">Email address</Label>
               <Input
-                id="full-name"
-                name="full-name"
-                type="text"
-                autoComplete="name"
-                required
-                value={formData.fullName}
-                onChange={(e) => handleInputChange('fullName', e.target.value)}
-                placeholder="Enter your full name"
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="signup-email">Email address</Label>
-              <Input
-                id="signup-email"
+                id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="student@example.com"
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="grade-level">Grade Level</Label>
-              <Select 
-                value={formData.gradeLevel} 
-                onValueChange={(value) => handleInputChange('gradeLevel', value)}
+              <Label htmlFor="grade">Grade Level</Label>
+              <select
+                id="grade"
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                className="w-full mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                required
               >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select your grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="6">Grade 6</SelectItem>
-                  <SelectItem value="7">Grade 7</SelectItem>
-                  <SelectItem value="8">Grade 8</SelectItem>
-                  <SelectItem value="9">Grade 9</SelectItem>
-                  <SelectItem value="10">Grade 10</SelectItem>
-                  <SelectItem value="11">Grade 11</SelectItem>
-                  <SelectItem value="12">Grade 12</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="">Select your grade</option>
+                <option value="6">6th Grade</option>
+                <option value="7">7th Grade</option>
+                <option value="8">8th Grade</option>
+                <option value="9">9th Grade</option>
+                <option value="10">10th Grade</option>
+                <option value="11">11th Grade</option>
+                <option value="12">12th Grade</option>
+              </select>
             </div>
 
             <div>
-              <Label htmlFor="signup-password">Password</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
-                id="signup-password"
+                id="password"
                 name="password"
                 type="password"
                 autoComplete="new-password"
                 required
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a secure password"
                 className="mt-1"
               />
             </div>
 
             <div>
-              <Label htmlFor="confirm-password">Confirm password</Label>
+              <Label htmlFor="confirm-password">Confirm Password</Label>
               <Input
                 id="confirm-password"
                 name="confirm-password"
                 type="password"
                 autoComplete="new-password"
                 required
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
                 className="mt-1"
               />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="terms"
-                checked={formData.acceptTerms}
-                onCheckedChange={(checked) => handleInputChange('acceptTerms', checked as boolean)}
-                required
-              />
-              <label htmlFor="terms" className="text-sm">
-                I agree to the{' '}
-                <a href="#" className="text-primary hover:text-primary/90">Terms of Service</a>
-                {' '}and{' '}
-                <a href="#" className="text-primary hover:text-primary/90">Privacy Policy</a>
-              </label>
             </div>
 
             <div>
@@ -215,7 +148,7 @@ export default function Signup() {
                 {loading ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creating account...
+                    Creating Account...
                   </div>
                 ) : (
                   <>
@@ -235,6 +168,28 @@ export default function Signup() {
               </Link>
             </div>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">What you'll get:</h3>
+            <div className="grid grid-cols-2 gap-3 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
+                <span>5 AI Topics</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
+                <span>Interactive Lessons</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
+                <span>AI Playground</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
+                <span>Badges & Certificates</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
