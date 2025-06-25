@@ -458,20 +458,45 @@ Type your answer below and let's begin this exciting lesson! 🚀`;
               </div>
             ) : (
               <div className="space-y-6">
-                {/* AI Response Display */}
-                {aiResponse && (
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div className="flex items-start space-x-2">
-                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                        <Volume2 className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900 dark:text-white mb-1">AI Teacher</div>
-                        <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{aiResponse}</div>
+                {/* Chat History */}
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {conversationHistory.map((msg, index) => (
+                    <div key={index} className={`${
+                      msg.role === 'ai' 
+                        ? 'bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800' 
+                        : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                    } rounded-lg p-4`}>
+                      <div className="flex items-start space-x-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          msg.role === 'ai' ? 'bg-primary text-white' : 'bg-gray-500 text-white'
+                        }`}>
+                          {msg.role === 'ai' ? <Volume2 className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900 dark:text-white mb-1">
+                            {msg.role === 'ai' ? 'AI Teacher' : 'You'}
+                          </div>
+                          <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{msg.content}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                  
+                  {/* Current AI Response */}
+                  {aiResponse && (
+                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <div className="flex items-start space-x-2">
+                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                          <Volume2 className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900 dark:text-white mb-1">AI Teacher</div>
+                          <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{aiResponse}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Student Response Input */}
                 <div className="space-y-4">
@@ -483,6 +508,7 @@ Type your answer below and let's begin this exciting lesson! 🚀`;
                       placeholder="Type your answer here..."
                       value={studentResponse}
                       onChange={(e) => setStudentResponse(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       rows={4}
                       className="w-full"
                     />
@@ -497,7 +523,7 @@ Type your answer below and let's begin this exciting lesson! 🚀`;
                       {isLoading ? (
                         <div className="flex items-center">
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Thinking...
+                          AI is thinking...
                         </div>
                       ) : (
                         <>
@@ -517,6 +543,43 @@ Type your answer below and let's begin this exciting lesson! 🚀`;
                   </div>
                 </div>
 
+                {/* Quiz Section */}
+                {showQuiz && (
+                  <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <h4 className="font-semibold mb-4 text-yellow-900 dark:text-yellow-100">
+                      Quick Check: Test Your Understanding
+                    </h4>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-yellow-800 dark:text-yellow-200 mb-2">
+                          What's the most important thing you learned in this lesson?
+                        </p>
+                        <Textarea
+                          placeholder="Share what you learned..."
+                          rows={3}
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-yellow-800 dark:text-yellow-200 mb-2">
+                          How would you use this knowledge in a real situation?
+                        </p>
+                        <Textarea
+                          placeholder="Describe a practical application..."
+                          rows={3}
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button size="sm">Submit Quiz</Button>
+                        <Button variant="outline" size="sm" onClick={() => setShowQuiz(false)}>
+                          Skip Quiz
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Progress in current lesson */}
                 {lessonProgress > 0 && (
                   <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -532,15 +595,22 @@ Type your answer below and let's begin this exciting lesson! 🚀`;
                     
                     {lessonProgress >= 100 && (
                       <div className="mt-4 text-center">
-                        <Badge variant="default" className="bg-success text-success-foreground">
-                          Lesson Complete! 🎉
+                        <Badge variant="default" className="bg-green-500 text-white">
+                          Lesson Complete!
                         </Badge>
-                        {currentStep < LESSON_STEPS.length && (
+                        {lessonNumber < currentTopic.totalLessons ? (
                           <Button 
                             onClick={nextLesson}
                             className="ml-4 bg-primary hover:bg-primary/90 text-white"
                           >
                             Next Lesson →
+                          </Button>
+                        ) : (
+                          <Button 
+                            onClick={goBackToCurriculum}
+                            className="ml-4 bg-primary hover:bg-primary/90 text-white"
+                          >
+                            Back to Curriculum
                           </Button>
                         )}
                       </div>
