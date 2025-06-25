@@ -98,6 +98,10 @@ export class GuardianAgent {
   }
   
   private static async logViolation(userId: string, gradeBand: string, content: string, reason: string) {
+    if (!db) {
+      console.log('Demo mode: Would log violation -', { userId, gradeBand, reason });
+      return;
+    }
     try {
       await addDoc(collection(db, 'safety_violations'), {
         userId,
@@ -115,6 +119,11 @@ export class GuardianAgent {
 // 2. Session Logger Agent - Activity Tracker
 export class SessionLogger {
   static async logSession(log: SessionLog) {
+    if (!db) {
+      console.log('Demo mode: Would log session -', { action: log.action, userId: log.userId });
+      return;
+    }
+    
     try {
       await addDoc(collection(db, 'session_logs', log.userId, 'sessions'), {
         gradeBand: log.gradeBand,

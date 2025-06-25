@@ -227,6 +227,19 @@ export class CurriculumGenerator {
 // Student Progress Tracking
 export class ProgressTracker {
   static async getStudentProgress(userId: string, topicId: string): Promise<StudentProgress | null> {
+    if (!db) {
+      console.log('Demo mode: Using default progress for', userId, topicId);
+      return {
+        userId,
+        topicId,
+        currentLesson: 1,
+        completedLessons: [],
+        testTaken: false,
+        badgeUnlocked: false,
+        lastActivity: new Date()
+      };
+    }
+    
     try {
       const progressRef = collection(db, 'student_progress');
       const q = query(progressRef, where('userId', '==', userId), where('topicId', '==', topicId));
@@ -287,6 +300,11 @@ export class ProgressTracker {
   }
 
   static async markTestTaken(userId: string, topicId: string, score: number, passed: boolean) {
+    if (!db) {
+      console.log('Demo mode: Would mark test taken for', userId, topicId, score, passed);
+      return;
+    }
+    
     try {
       const progressRef = collection(db, 'student_progress');
       const q = query(progressRef, where('userId', '==', userId), where('topicId', '==', topicId));
@@ -307,6 +325,19 @@ export class ProgressTracker {
   }
 
   static async getAllTopicProgress(userId: string): Promise<StudentProgress[]> {
+    if (!db) {
+      console.log('Demo mode: Returning mock progress for', userId);
+      return CURRICULUM_TOPICS.map(topic => ({
+        userId,
+        topicId: topic.id,
+        currentLesson: 1,
+        completedLessons: [],
+        testTaken: false,
+        badgeUnlocked: false,
+        lastActivity: new Date()
+      }));
+    }
+    
     try {
       const progressRef = collection(db, 'student_progress');
       const q = query(progressRef, where('userId', '==', userId), orderBy('lastActivity', 'desc'));
