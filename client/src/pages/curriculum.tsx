@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { PlayCircle, Trophy, Clock, CheckCircle, Lock, BookOpen, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 import { 
   CURRICULUM_TOPICS, 
   CurriculumGenerator, 
@@ -27,6 +28,7 @@ import { Send } from 'lucide-react';
 export default function Curriculum() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const [selectedTopic, setSelectedTopic] = useState<CurriculumTopic | null>(null);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
   const [progressData, setProgressData] = useState<StudentProgress[]>([]);
@@ -87,43 +89,8 @@ export default function Curriculum() {
   };
 
   const startLesson = async (topic: CurriculumTopic, lessonNumber: number) => {
-    // All topics are accessible after access code validation
-
-    try {
-      // 1. Fetch student memory from Firebase
-      const userId = getUserId();
-      const memory = await SmartMemory.getStudentMemory(userId, gradeBand);
-      setStudentMemory(memory);
-      
-      // 2. Generate personalized message
-      let personalizedMsg = '';
-      if (memory.lastLessonTopic && memory.lastLessonTopic !== topic.id) {
-        const lastTopicTitle = CURRICULUM_TOPICS.find(t => t.id === memory.lastLessonTopic)?.title || memory.lastLessonTopic;
-        personalizedMsg = `Welcome back! Last time you studied ${lastTopicTitle}. Let's build on that.`;
-      } else if (memory.totalLessonsCompleted > 0) {
-        personalizedMsg = `Great to see you continuing your AI learning journey! You've completed ${memory.totalLessonsCompleted} lessons so far.`;
-      } else {
-        personalizedMsg = 'Welcome to your first AI lesson! Let\'s begin your learning journey.';
-      }
-      setPersonalizedMessage(personalizedMsg);
-      
-      const lesson = await CurriculumGenerator.generateLesson(topic.id, lessonNumber, gradeBand);
-      setCurrentLesson(lesson);
-      setSelectedTopic(topic);
-      setIsLessonDialogOpen(true);
-      setConversationHistory([]);
-      setIsLessonActive(false);
-
-      // Log lesson start
-      await SessionLogger.logLessonStart(userId, gradeBand, lessonNumber);
-    } catch (error) {
-      console.error('Failed to start lesson:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load lesson. Please try again.",
-      });
-    }
+    // Navigate to lessons page with proper parameters
+    setLocation(`/lessons?topic=${topic.id}&lesson=${lessonNumber}&grade=${gradeBand}`);
   };
 
   const startInteractiveLesson = async () => {

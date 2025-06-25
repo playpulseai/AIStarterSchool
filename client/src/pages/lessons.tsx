@@ -317,96 +317,144 @@ Type your answer below and let's begin this exciting lesson! 🚀`;
     setLocation('/curriculum');
   };
 
+  // Show loading state if lesson content is not yet loaded
+  if (isLoading && !currentTopic) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-4"></div>
+              <span className="text-lg">Loading lesson content...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if no topic is loaded
+  if (!currentTopic || !currentLesson) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-20">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              No Lesson Content Found
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Please select a lesson from the curriculum page.
+            </p>
+            <Button onClick={goBackToCurriculum}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Curriculum
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <Button 
+              variant="outline" 
+              onClick={goBackToCurriculum}
+              className="flex items-center"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Curriculum
+            </Button>
+            <Badge variant="outline" className="text-sm">
+              {gradeLevel === 'middle' ? 'Grades 6-8' : 'Grades 9-12'}
+            </Badge>
+          </div>
+          
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            👋 Welcome back, {user?.email?.split('@')[0] || 'Student'}!
+            {currentTopic.icon} {currentTopic.title}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Ready to continue your AI learning journey?
+            Lesson {lessonNumber} of {currentTopic.totalLessons}: {currentLesson.title}
           </p>
           
-          {/* Grade Level Toggle */}
-          <div className="flex space-x-4 mb-6">
-            <Button
-              variant={gradeLevel === 'middle' ? 'default' : 'outline'}
-              onClick={() => setGradeLevel('middle')}
-              className="flex items-center space-x-2"
-            >
-              <span>Grades 6-8</span>
-            </Button>
-            <Button
-              variant={gradeLevel === 'high' ? 'default' : 'outline'}
-              onClick={() => setGradeLevel('high')}
-              className="flex items-center space-x-2"
-            >
-              <span>Grades 9-12</span>
-            </Button>
-          </div>
+          {personalizedMessage && (
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+              <p className="text-blue-800 dark:text-blue-200">{personalizedMessage}</p>
+            </div>
+          )}
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Learning Progress</h2>
+        {/* Lesson Progress */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Lesson Progress
+            </span>
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Step {currentStep} of {LESSON_STEPS.length}
+              {lessonProgress}%
             </span>
           </div>
-          <div className="flex items-center space-x-2 mb-2">
-            {LESSON_STEPS.map((step, index) => (
-              <div
-                key={step.id}
-                className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium transition-colors ${
-                  index + 1 < currentStep 
-                    ? 'bg-success text-success-foreground' 
-                    : index + 1 === currentStep 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                }`}
-              >
-                {index + 1 < currentStep ? <CheckCircle className="h-5 w-5" /> : step.icon}
-              </div>
-            ))}
-          </div>
-          <Progress value={(currentStep - 1) * 20 + (lessonActive ? lessonProgress * 0.2 : 0)} className="h-2" />
+          <Progress value={lessonProgress} className="h-2" />
         </div>
 
         {/* Main Lesson Card */}
-        <Card className="mb-8">
+        <Card className="mb-8" ref={chatContainerRef}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <span className="text-2xl">{LESSON_STEPS[currentStep - 1].icon}</span>
-              <span>Lesson: {LESSON_STEPS[currentStep - 1].title} – Step {currentStep} of {LESSON_STEPS.length}</span>
+              <span className="text-2xl">{currentTopic.icon}</span>
+              <span>{currentLesson.title}</span>
             </CardTitle>
             <CardDescription>
-              {LESSON_STEPS[currentStep - 1].description}
+              {currentLesson.description}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!lessonActive ? (
-              <div className="text-center py-8">
-                <Button 
-                  onClick={startLesson}
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-white"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Starting Lesson...
-                    </div>
-                  ) : (
-                    <>
-                      <PlayCircle className="mr-2 h-5 w-5" />
-                      🔊 Start Lesson
-                    </>
-                  )}
-                </Button>
+              <div className="space-y-6">
+                {/* Lesson Content Overview */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">What you'll learn:</h4>
+                    <p className="text-gray-600 dark:text-gray-400">{currentLesson.description}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold mb-2">Your task:</h4>
+                    <p className="text-gray-600 dark:text-gray-400">{currentLesson.task}</p>
+                  </div>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">Try this prompt:</h4>
+                    <p className="text-blue-800 dark:text-blue-200 font-mono text-sm bg-white dark:bg-blue-900/50 p-2 rounded">
+                      {currentLesson.promptSuggestion}
+                    </p>
+                  </div>
+                  
+                  <div className="text-center py-4">
+                    <Button 
+                      onClick={startLesson}
+                      size="lg"
+                      className="bg-primary hover:bg-primary/90 text-white"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Starting Lesson...
+                        </div>
+                      ) : (
+                        <>
+                          <PlayCircle className="mr-2 h-5 w-5" />
+                          Start Learning
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-6">
