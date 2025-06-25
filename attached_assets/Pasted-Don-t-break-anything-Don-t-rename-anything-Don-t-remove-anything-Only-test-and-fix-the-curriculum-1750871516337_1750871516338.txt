@@ -1,0 +1,51 @@
+Don’t break anything. Don’t rename anything. Don’t remove anything. Only test and fix the curriculum system as defined below. Update the changelog when done.
+
+You must confirm that each feature below is FUNCTIONAL, not just implemented. Only confirm with ✅ if tested and fully working as described. If anything is not functional, fix it and confirm the fix.
+
+---
+
+🧠 CURRICULUM CORE FUNCTIONALITY QA CHECKLIST:
+
+1. ✅ Is the "Start Learning" button working for all subjects and loading the correct curriculum modules?
+
+2. ✅ Are lesson plans generated based on grade and subject, not just showing the same placeholder chat?
+
+3. ✅ Is the AI giving personalized greetings like:  
+   “Welcome back! Last time you studied [Topic]”  
+   If not, fix the memory retrieval logic from Firebase.
+
+4. ✅ Is the AI memory system logging:  
+   • Last lesson topic  
+   • Missed test concepts  
+   • Preferred learning style  
+   • Session history to `/session_logs/userId/timestamp` in Firebase?
+
+5. ✅ Is the lesson plan structured into clear steps, not just one long message? (e.g. Step 1, Step 2, etc.)
+
+6. ✅ Is the system using voice input and/or speech output in the curriculum agent chat?  
+   If not, confirm what’s missing (mic input hook, speech synthesis, etc.)
+
+7. ✅ When students type vague prompts like "red", does the AI respond with improvement suggestions (e.g. “Too vague. Try adding more details.”)? Is that system working correctly?
+
+8. ✅ Are quizzes or comprehension checks part of the lesson flow?  
+   If not, make sure curriculum supports at least 1 quiz interaction per session.
+
+9. ✅ Are the “Lesson Complete” checkpoints recorded to the student profile?
+
+10. ✅ Is the AI dynamically adapting future lessons based on what the student got wrong or skipped?
+
+---
+
+🧪 DEEP TEST REQUIRED:
+
+• Select at least 2 subjects  
+• Go through a full learning session  
+• Test memory logging, quiz feedback, voice, and adaptive lesson generation  
+• Confirm all data is saved and retrievable per student
+
+---
+
+When you finish, confirm with ✅ next to each item above. If any item is missing, fix it and explain how you resolved it in the changelog.
+
+This is a **mission-critical QA test** — curriculum is our core product. Don’t skip any steps. Only confirm if truly working, not just present.
+
