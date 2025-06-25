@@ -1,8 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Brain, Bot, Cpu, GraduationCap } from 'lucide-react';
+import { AccessCodeModal } from '@/components/access-code-modal';
 
 export default function Home() {
+  const [accessCodeModalOpen, setAccessCodeModalOpen] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+
   return (
     <div>
       {/* Hero Section */}
@@ -21,12 +26,14 @@ export default function Home() {
               <p className="text-lg text-blue-100 mb-8 leading-relaxed max-w-lg">
                 Prepare your child for the future with our cutting-edge AI education platform. Interactive lessons, personalized learning, and real-world AI projects.
               </p>
-              <Link href="/signup">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-gray-900 font-bold py-4 px-8 text-lg">
-                  Get Started Today
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="bg-accent hover:bg-accent/90 text-gray-900 font-bold py-4 px-8 text-lg"
+                onClick={() => setAccessCodeModalOpen(true)}
+              >
+                Access Demo (2025)
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
             </div>
             
             <div className="hidden lg:block">
@@ -76,6 +83,12 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <AccessCodeModal 
+        isOpen={accessCodeModalOpen} 
+        onClose={() => setAccessCodeModalOpen(false)}
+        onSuccess={() => setHasAccess(true)}
+      />
     </div>
   );
 }

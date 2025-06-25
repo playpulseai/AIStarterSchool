@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Bot, Mic, TrendingUp, FolderOpen, Shield, Award, Check, ArrowRight } from 'lucide-react';
+import { AccessCodeModal } from '@/components/access-code-modal';
 
 export default function Features() {
+  const [accessCodeModalOpen, setAccessCodeModalOpen] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
   const features = [
     {
       icon: <Bot className="h-8 w-8 text-white" />,
@@ -111,15 +115,23 @@ export default function Features() {
             <p className="text-xl mb-6 text-blue-100">
               Join thousands of students already mastering AI skills with our innovative platform.
             </p>
-            <Link href="/signup">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 text-gray-900 font-bold py-3 px-8 text-lg">
-                Start Learning Today
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="bg-accent hover:bg-accent/90 text-gray-900 font-bold py-3 px-8 text-lg"
+              onClick={() => setAccessCodeModalOpen(true)}
+            >
+              Access Demo (2025)
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>
+
+      <AccessCodeModal 
+        isOpen={accessCodeModalOpen} 
+        onClose={() => setAccessCodeModalOpen(false)}
+        onSuccess={() => setHasAccess(true)}
+      />
     </div>
   );
 }
