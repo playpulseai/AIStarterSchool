@@ -21,6 +21,7 @@ import Profile from "@/pages/profile";
 import Curriculum from "@/pages/curriculum";
 import Admin from "@/pages/admin";
 import Gallery from "@/pages/gallery";
+import Playground from "@/pages/playground";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {

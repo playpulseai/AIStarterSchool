@@ -61,6 +61,12 @@ export function Navigation() {
             <Link href="/projects" className={isActive('/projects') ? 'nav-link-active' : 'nav-link'}>
               Projects
             </Link>
+            <Link href="/gallery" className={isActive('/gallery') ? 'nav-link-active' : 'nav-link'}>
+              Gallery
+            </Link>
+            <Link href="/playground" className={isActive('/playground') ? 'nav-link-active' : 'nav-link'}>
+              Playground
+            </Link>
             <Link href="/admin" className={isActive('/admin') ? 'nav-link-active' : 'nav-link'}>
               Admin
             </Link>
