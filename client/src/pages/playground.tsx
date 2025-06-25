@@ -102,17 +102,15 @@ export default function Playground() {
         timestamp: new Date()
       });
 
-      // Call AI generation endpoint
-      const response = await fetch('/api/ai-teacher', {
+      // Call playground generation endpoint
+      const response = await fetch('/api/playground-generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: getToolSystemPrompt(toolType, prompt),
-          gradeBand: 'middle',
-          lessonStep: 0,
-          conversationHistory: []
+          toolType,
+          prompt
         })
       });
 

@@ -3,6 +3,13 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { callAITeacher, generateLessonContent, generateCurriculumLesson, generateTest, type AITeacherRequest } from "./openai-service";
 import { AdminService } from "./admin-service";
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const MODEL = "gpt-4o";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // AI Teacher API endpoints
@@ -14,6 +21,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("AI Teacher API error:", error);
       res.status(500).json({ error: "Failed to process AI teacher request" });
+    }
+  });
+
+  // Playground AI generation endpoint
+  app.post("/api/playground-generate", async (req, res) => {
+    try {
+      const { toolType, prompt } = req.body;
+      
+      let systemPrompt = "";
+      switch (toolType) {
+        case 'logo':
+          systemPrompt = `You are a professional logo designer. Create a detailed written description of a logo design based on this request: "${prompt}". Include colors, shapes, typography style, and the overall aesthetic. Be specific and creative but keep it appropriate for students.`;
+          break;
+        case 'story':
+          systemPrompt = `You are a creative writing assistant. Write an engaging, age-appropriate short story (300-500 words) based on this prompt: "${prompt}". Make it creative, fun, and suitable for middle/high school students.`;
+          break;
+        case 'chatbot':
+          systemPrompt = `You are helping design a chatbot. Based on this request: "${prompt}", provide a detailed description of the chatbot including its personality, main functions, sample conversation starters, and how it would interact with users. Keep it educational and appropriate.`;
+          break;
+        default:
+          systemPrompt = `Help the user with their creative request: "${prompt}"`;
+      }
+
+      const completion = await openai.chat.completions.create({
+        model: MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 800,
+        temperature: 0.8
+      });
+
+      const response = completion.choices[0]?.message?.content || 'Unable to generate content. Please try again.';
+      
+      res.json({ response });
+    } catch (error) {
+      console.error("Playground generation error:", error);
+      res.status(500).json({ error: "Failed to generate content" });
     }
   });
 
