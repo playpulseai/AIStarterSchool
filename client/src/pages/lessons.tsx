@@ -1,34 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { PlayCircle, Send, Volume2, RotateCcw, CheckCircle } from 'lucide-react';
+import { PlayCircle, Send, Volume2, RotateCcw, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GuardianAgent, SessionLogger, RoleValidator, getUserId, saveUserProgress } from '@/lib/safety-agents';
 import { SmartMemory } from '@/lib/smart-memory';
 import { apiRequest } from '@/lib/queryClient';
-
-const LESSON_STEPS = [
-  { id: 1, title: 'Prompting Basics', icon: '🌱', description: 'Learn how to write clear instructions for AI' },
-  { id: 2, title: 'AI Writing', icon: '✍️', description: 'Create stories and content with AI assistance' },
-  { id: 3, title: 'AI Art Generation', icon: '🎨', description: 'Generate images and artwork using AI' },
-  { id: 4, title: 'AI Productivity', icon: '🧠', description: 'Use AI to boost your everyday productivity' },
-  { id: 5, title: 'Ethics & Responsibility', icon: '💼', description: 'Learn responsible AI usage and ethics' },
-];
-
-const GRADE_LEVELS = {
-  'middle': { label: 'Grades 6-8', range: '6-8' },
-  'high': { label: 'Grades 9-12', range: '9-12' }
-};
+import { CurriculumGenerator, CURRICULUM_TOPICS, type CurriculumTopic, type Lesson } from '@/lib/curriculum-engine';
+import { useLocation } from 'wouter';
 
 export default function Lessons() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const [gradeLevel, setGradeLevel] = useState<'middle' | 'high'>('middle');
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentTopic, setCurrentTopic] = useState<CurriculumTopic | null>(null);
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
+  const [lessonNumber, setLessonNumber] = useState(1);
   const [lessonActive, setLessonActive] = useState(false);
   const [studentResponse, setStudentResponse] = useState('');
   const [aiResponse, setAiResponse] = useState('');
@@ -36,42 +28,76 @@ export default function Lessons() {
   const [lessonProgress, setLessonProgress] = useState(0);
   const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'ai' | 'student', content: string, timestamp: Date }>>([]);
   const [studentMemory, setStudentMemory] = useState<any>(null);
+  const [personalizedMessage, setPersonalizedMessage] = useState('');
+  const [quizQuestions, setQuizQuestions] = useState<Array<{ question: string; answer: string }>>([]);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Autonomous AI Teacher System Prompt
-  const getSystemPrompt = (grade: 'middle' | 'high', step: number) => {
-    const gradeRange = GRADE_LEVELS[grade].range;
-    const currentLesson = LESSON_STEPS[step - 1];
+  // Parse URL parameters on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const topicId = urlParams.get('topic');
+    const lesson = urlParams.get('lesson');
+    const grade = urlParams.get('grade') as 'middle' | 'high';
     
-    return `You are an Autonomous AI Teacher developed by AIStarter School.
+    if (topicId && lesson && grade) {
+      const topic = CURRICULUM_TOPICS.find(t => t.id === topicId);
+      if (topic) {
+        setCurrentTopic(topic);
+        setLessonNumber(parseInt(lesson));
+        setGradeLevel(grade);
+        loadLessonContent(topic, parseInt(lesson), grade);
+      }
+    }
+  }, []);
 
-Your mission is to teach students (Grades ${gradeRange}) how to use artificial intelligence in everyday life. You operate completely independently: delivering voice lessons, asking questions, evaluating input, and progressing students through lessons.
-
-🧠 Focus Areas:
-- Prompting basics
-- AI writing, storytelling
-- AI image generation
-- AI productivity tools
-- Ethics and responsibility
-
-🎓 Teaching Format:
-1. Greet the student: "Hi, I'm your AI teacher for today…"
-2. Deliver 5-step lesson on "${currentLesson.title}"
-3. Ask student to try a task
-4. Wait for response → give feedback
-5. Repeat or advance
-
-🔒 Rules:
-- Only respond to age-appropriate questions for grades ${gradeRange}
-- Redirect inappropriate input: "Let's stay focused on AI learning."
-- All interactions monitored by background agents
-- Log all sessions, prompts, and test attempts
-
-Your goal: build real AI fluency. Stay in teacher mode. Don't break character.
-
-Current lesson: ${currentLesson.title} - ${currentLesson.description}`;
+  const loadLessonContent = async (topic: CurriculumTopic, lessonNum: number, grade: 'middle' | 'high') => {
+    try {
+      setIsLoading(true);
+      
+      // Generate lesson content
+      const lesson = await CurriculumGenerator.generateLesson(topic.id, lessonNum, grade);
+      setCurrentLesson(lesson);
+      
+      // Fetch student memory from Firebase
+      const userId = getUserId();
+      const memory = await SmartMemory.getStudentMemory(userId, grade);
+      setStudentMemory(memory);
+      
+      // Generate personalized message
+      let personalizedMsg = '';
+      if (memory.lastLessonTopic && memory.lastLessonTopic !== topic.id) {
+        const lastTopicTitle = CURRICULUM_TOPICS.find(t => t.id === memory.lastLessonTopic)?.title || memory.lastLessonTopic;
+        personalizedMsg = `Welcome back! Last time you studied ${lastTopicTitle}. Let's build on that knowledge.`;
+      } else if (memory.totalLessonsCompleted > 0) {
+        personalizedMsg = `Great to see you continuing your AI learning journey! You've completed ${memory.totalLessonsCompleted} lessons so far.`;
+      } else {
+        personalizedMsg = 'Welcome to your first AI lesson! Let\'s begin your learning journey.';
+      }
+      setPersonalizedMessage(personalizedMsg);
+      
+    } catch (error) {
+      console.error('Failed to load lesson content:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load lesson content. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const startLesson = async () => {
+    if (!currentTopic || !currentLesson) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No lesson content loaded. Please return to curriculum.",
+      });
+      return;
+    }
+
     const userId = getUserId();
     const currentGradeBand = gradeLevel;
     
@@ -91,30 +117,30 @@ Current lesson: ${currentLesson.title} - ${currentLesson.description}`;
     setIsLoading(true);
 
     // Log lesson start
-    await SessionLogger.logLessonStart(userId, currentGradeBand, currentStep);
+    await SessionLogger.logLessonStart(userId, currentGradeBand, lessonNumber);
 
     try {
-      // Generate initial lesson content using OpenAI
-      const response = await apiRequest<{ content: string }>('/api/generate-lesson', {
-        method: 'POST',
-        body: JSON.stringify({
-          gradeBand: currentGradeBand,
-          lessonStep: currentStep
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      // Create personalized AI teacher greeting
+      const memoryContext = studentMemory ? SmartMemory.generateSystemPromptInjection(studentMemory) : '';
+      
+      const greeting = `Hi! I'm your AI teacher for today! 👋 
 
-      const greeting = response.content || `Hi, I'm your AI teacher for today! 👋 
+${personalizedMessage}
 
-I'm here to guide you through "${LESSON_STEPS[currentStep - 1].title}" - an exciting lesson designed specifically for students in ${GRADE_LEVELS[gradeLevel].label}.
+Today we're diving into "${currentLesson.title}" - ${currentLesson.description}
 
-${LESSON_STEPS[currentStep - 1].description}
+**What you'll learn:**
+${currentLesson.description}
 
-Let's start with a quick question: What do you think artificial intelligence is, and have you used any AI tools before? Don't worry if you're not sure - that's exactly why we're here to learn together!
+**Your task:**
+${currentLesson.task}
 
-Type your answer below and let's begin this amazing journey! 🚀`;
+**Suggested approach:**
+Try this: "${currentLesson.promptSuggestion}"
+
+Let's start with a quick question: What do you already know about ${currentTopic.title.toLowerCase()}? Have you tried anything like this before?
+
+Type your answer below and let's begin this exciting lesson! 🚀`;
 
       // Filter AI output through Guardian Agent
       const filterResult = await GuardianAgent.filterOutput(greeting, userId, currentGradeBand);
@@ -128,7 +154,12 @@ Type your answer below and let's begin this amazing journey! 🚀`;
       }]);
 
       // Log AI response
-      await SessionLogger.logAiResponse(userId, currentGradeBand, currentStep, finalGreeting);
+      await SessionLogger.logAiResponse(userId, currentGradeBand, lessonNumber, finalGreeting);
+      
+      // Auto-scroll to chat
+      setTimeout(() => {
+        chatContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
       
     } catch (error) {
       console.error('Failed to start lesson:', error);
@@ -143,7 +174,7 @@ Type your answer below and let's begin this amazing journey! 🚀`;
   };
 
   const submitResponse = async () => {
-    if (!studentResponse.trim()) return;
+    if (!studentResponse.trim() || !currentTopic || !currentLesson) return;
 
     const userId = getUserId();
     const currentGradeBand = gradeLevel;
@@ -164,34 +195,45 @@ Type your answer below and let's begin this amazing journey! 🚀`;
     setStudentResponse('');
 
     // Log user prompt
-    await SessionLogger.logPromptSubmit(userId, currentGradeBand, currentStep, userMessage);
+    await SessionLogger.logPromptSubmit(userId, currentGradeBand, lessonNumber, userMessage);
 
     // Add student response to history
-    setConversationHistory(prev => [...prev, { 
-      role: 'student', 
+    const updatedHistory = [...conversationHistory, { 
+      role: 'student' as const, 
       content: userMessage, 
       timestamp: new Date() 
-    }]);
+    }];
+    setConversationHistory(updatedHistory);
 
     try {
-      // Call OpenAI AI Teacher service
+      // Call OpenAI AI Teacher service with memory context
+      const memoryContext = studentMemory ? SmartMemory.generateSystemPromptInjection(studentMemory) : '';
+      
       const aiRequest = {
         message: userMessage,
         gradeBand: currentGradeBand,
-        lessonStep: currentStep,
-        conversationHistory: conversationHistory.map(msg => ({
+        lessonStep: lessonNumber,
+        conversationHistory: updatedHistory.map(msg => ({
           role: msg.role === 'student' ? 'user' as const : 'assistant' as const,
           content: msg.content
-        }))
+        })),
+        memoryContext,
+        studentMemory
       };
 
-      const aiResult = await apiRequest<{response: string, lessonComplete: boolean, nextStep?: number}>('/api/ai-teacher', {
+      const response = await fetch('/api/ai-teacher', {
         method: 'POST',
-        body: JSON.stringify(aiRequest),
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(aiRequest)
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const aiResult = await response.json();
 
       // Filter AI output through Guardian Agent
       const outputFilter = await GuardianAgent.filterOutput(aiResult.response, userId, currentGradeBand);
@@ -205,17 +247,35 @@ Type your answer below and let's begin this amazing journey! 🚀`;
       }]);
 
       // Log AI response
-      await SessionLogger.logAiResponse(userId, currentGradeBand, currentStep, finalResponse);
+      await SessionLogger.logAiResponse(userId, currentGradeBand, lessonNumber, finalResponse);
       
       // Update progress
       const newProgress = Math.min(lessonProgress + 15, 100);
       setLessonProgress(newProgress);
 
-      // Save progress to Firebase
-      if (aiResult.lessonComplete) {
+      // Save progress to Firebase and update memory
+      if (aiResult.lessonComplete || newProgress >= 100) {
         setLessonProgress(100);
-        await saveUserProgress(userId, currentGradeBand, currentStep, true);
+        await saveUserProgress(userId, currentGradeBand, lessonNumber, true);
+        
+        // Update student memory
+        await SmartMemory.updateStudentMemory({
+          lessonTopic: currentTopic.id,
+          interactionData: {
+            askedForExamples: userMessage.toLowerCase().includes('example'),
+            neededEncouragement: false,
+            usedVaguePrompts: userMessage.length < 20,
+            responseTime: 0
+          }
+        }, userId);
+        
+        setShowQuiz(true);
       }
+
+      // Auto-scroll to latest message
+      setTimeout(() => {
+        chatContainerRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
       
     } catch (error) {
       console.error('Failed to get AI response:', error);
@@ -230,12 +290,10 @@ Type your answer below and let's begin this amazing journey! 🚀`;
   };
 
   const nextLesson = () => {
-    if (currentStep < LESSON_STEPS.length) {
-      setCurrentStep(prev => prev + 1);
-      setLessonActive(false);
-      setLessonProgress(0);
-      setConversationHistory([]);
-      setAiResponse('');
+    if (currentTopic && lessonNumber < currentTopic.totalLessons) {
+      const nextLessonNum = lessonNumber + 1;
+      setLocation(`/lessons?topic=${currentTopic.id}&lesson=${nextLessonNum}&grade=${gradeLevel}`);
+      window.location.reload();
     }
   };
 
@@ -245,6 +303,18 @@ Type your answer below and let's begin this amazing journey! 🚀`;
     setConversationHistory([]);
     setAiResponse('');
     setStudentResponse('');
+    setShowQuiz(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitResponse();
+    }
+  };
+
+  const goBackToCurriculum = () => {
+    setLocation('/curriculum');
   };
 
   return (
