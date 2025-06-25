@@ -67,6 +67,7 @@ Your mission is to teach students (Grades ${gradeRange}) how to use artificial i
 - Include comprehension checks: "Can you explain back to me what we just learned?"
 - End lessons with quiz questions to test understanding
 - For AI Art Lesson 2: Include DALL-E/DeepArt tutorial, prompt refinement exercises, and 3 quiz questions
+- For Grade 9-12 lessons: Include case studies, ethical dilemmas, advanced techniques, and industry applications
 
 ${memoryContext ? `\n🧠 STUDENT CONTEXT:\n${memoryContext}\n\nUse this context to personalize your teaching approach, reference past lessons, and adapt your explanations to this student's learning style and experience level.` : ''}
 
@@ -75,7 +76,7 @@ Your goal: build real AI fluency. Stay in teacher mode. Don't break character.
 Teaching style for ${gradeRange}:
 ${gradeBand === 'middle' 
   ? '- Use simple, clear language appropriate for ages 11-14\n- Focus on practical examples and games\n- Keep lessons interactive and fun with frequent engagement\n- Use analogies kids can understand (like comparing AI to a helpful robot friend)\n- Include hands-on activities and creative projects\n- Emphasize safety and basic digital citizenship'
-  : '- Use sophisticated vocabulary appropriate for ages 14-18\n- Include technical concepts and terminology\n- Focus on real-world applications and career preparation\n- Discuss advanced topics like machine learning algorithms\n- Prepare students for college-level computer science\n- Cover complex ethical implications and societal impact\n- Include coding concepts and technical implementation details'
+  : '- Use sophisticated vocabulary appropriate for ages 14-18\n- Include technical concepts and industry terminology\n- Focus on real-world case studies: AI in finance (algorithmic trading), healthcare (diagnostic AI), criminal justice (sentencing algorithms)\n- Discuss advanced topics like machine learning bias, neural network architectures, and algorithmic accountability\n- Prepare students for college-level computer science and AI ethics courses\n- Cover complex ethical dilemmas: surveillance vs. personalization, automation vs. employment, privacy vs. security\n- Include advanced prompt engineering: instruction chaining, creative constraints, input sensitivity testing\n- Add scenario-based questions and group projects\n- Connect to current events and regulatory frameworks (EU AI Act, algorithmic auditing)'
 }`;
 }
 
@@ -225,11 +226,15 @@ export async function generateCurriculumLesson(topicId: string, topicTitle: stri
           - Focus on practical applications they can relate to
           - Use analogies to everyday objects
           ` : `
-          For Grades 9-12:
-          - Include advanced concepts and technical details
-          - Cover industry applications and career connections
-          - Discuss ethical implications in depth
-          - Include coding and algorithmic thinking
+          For Grades 9-12 ADVANCED CONTENT:
+          - Include complex real-world case studies (hiring bias, finance algorithms, healthcare AI)
+          - Add scenario-based ethical dilemmas with decision trees
+          - Cover industry applications and career pathways
+          - Include advanced prompt engineering techniques (chaining, constraints, sensitivity analysis)
+          - Discuss surveillance vs. personalization in education technology
+          - Add group project ideas and collaborative problem-solving
+          - Include coding concepts, algorithmic thinking, and technical implementation
+          - Cover legal and regulatory implications (GDPR, AI Act, algorithmic accountability)
           `}
           `}`
         }
@@ -245,10 +250,55 @@ export async function generateCurriculumLesson(topicId: string, topicTitle: stri
     if (topicId === 'ai-art' && stepNumber === 2) {
       return {
         title: "Creating Your First AI Artwork",
-        description: "Learn to create digital artwork using DALL-E and DeepArt tools with effective prompting techniques",
-        task: "Create your first piece of digital artwork using AI tools and experiment with prompt refinement techniques",
-        promptSuggestion: "A cat wearing a wizard hat casting spells in a library"
+        description: gradeBand === 'high' 
+          ? "Master advanced AI art generation using DALL-E and Midjourney with sophisticated prompt engineering and style analysis"
+          : "Learn to create digital artwork using DALL-E and DeepArt tools with effective prompting techniques",
+        task: gradeBand === 'high'
+          ? "Create a portfolio of AI artwork demonstrating advanced techniques: style transfer, prompt chaining, and comparative analysis of different AI art platforms"
+          : "Create your first piece of digital artwork using AI tools and experiment with prompt refinement techniques",
+        promptSuggestion: gradeBand === 'high'
+          ? "Create a series: 'Cyberpunk cityscape in the style of Van Gogh', then modify with constraints like 'limited color palette' and 'architectural focus'"
+          : "A cat wearing a wizard hat casting spells in a library"
       };
+    }
+
+    // Enhanced content for Grade 9-12 advanced topics
+    if (gradeBand === 'high') {
+      if (topicId === 'ethics' && stepNumber === 1) {
+        return {
+          title: "AI Ethics and Algorithmic Bias",
+          description: "Examine real-world cases of AI bias in hiring, criminal justice, and healthcare. Analyze ethical frameworks for AI development.",
+          task: "Research and present a case study on algorithmic bias (e.g., COMPAS recidivism algorithm, Amazon hiring AI). Propose solutions.",
+          promptSuggestion: "Design an ethical framework for an AI hiring system. What safeguards would prevent discrimination?"
+        };
+      }
+      
+      if (topicId === 'automation' && stepNumber === 1) {
+        return {
+          title: "Advanced AI Automation Systems",
+          description: "Analyze complex automation implementations in healthcare, manufacturing, and financial services. Examine economic and social impacts.",
+          task: "Design an automation strategy for a real organization. Consider implementation challenges, job displacement, and efficiency gains.",
+          promptSuggestion: "How would you automate hospital patient flow while maintaining human oversight and ethical standards?"
+        };
+      }
+      
+      if (topicId === 'ai-for-school' && stepNumber === 1) {
+        return {
+          title: "Educational AI: Personalization vs. Surveillance",
+          description: "Explore adaptive learning systems, proctoring AI, and student data privacy. Balance personalization with ethical concerns.",
+          task: "Debate: Should schools use AI to monitor student attention and behavior? Present arguments for both sides.",
+          promptSuggestion: "Design an AI tutoring system that personalizes learning without violating student privacy."
+        };
+      }
+      
+      if (topicId === 'prompting-basics' && stepNumber === 1) {
+        return {
+          title: "Advanced Prompt Engineering",
+          description: "Master instruction chaining, creative constraints, input sensitivity, and prompt optimization techniques for complex tasks.",
+          task: "Create a prompt chain that solves a multi-step problem (e.g., business analysis, creative writing, code debugging).",
+          promptSuggestion: "Design a prompt sequence: 1) Analyze market data, 2) Identify trends, 3) Generate strategic recommendations with risk assessment."
+        };
+      }
     }
     
     return {
