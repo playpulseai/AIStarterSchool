@@ -116,27 +116,34 @@ export class CurriculumGenerator {
     if (!topic) throw new Error('Topic not found');
 
     try {
-      const response = await apiRequest<{
-        title: string;
-        description: string;
-        task: string;
-        promptSuggestion: string;
-      }>('/api/generate-curriculum-lesson', 'POST', {
-        topicId,
-        topicTitle: topic.title,
-        stepNumber,
-        gradeBand,
-        totalSteps: topic.totalLessons
+      const response = await fetch('/api/generate-curriculum-lesson', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          topicId,
+          topicTitle: topic.title,
+          stepNumber,
+          gradeBand,
+          totalSteps: topic.totalLessons
+        })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
 
       const lesson: Lesson = {
         id: `${topicId}-lesson-${stepNumber}`,
         topicId,
         stepNumber,
-        title: response.title,
-        description: response.description,
-        task: response.task,
-        promptSuggestion: response.promptSuggestion,
+        title: data.title,
+        description: data.description,
+        task: data.task,
+        promptSuggestion: data.promptSuggestion,
         gradeBand,
         estimatedTime: gradeBand === 'middle' ? 15 : 20
       };
@@ -361,13 +368,24 @@ export class ProgressTracker {
 export class TestGenerator {
   static async generateTest(topicId: string, gradeBand: 'middle' | 'high'): Promise<TestQuestion[]> {
     try {
-      const response = await apiRequest<{ questions: TestQuestion[] }>('/api/generate-test', 'POST', {
-        topicId,
-        gradeBand,
-        questionCount: gradeBand === 'middle' ? 3 : 5
+      const response = await fetch('/api/generate-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          topicId,
+          gradeBand,
+          questionCount: gradeBand === 'middle' ? 3 : 5
+        })
       });
 
-      return response.questions;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.questions;
     } catch (error) {
       console.error('Failed to generate test:', error);
       return this.getFallbackTest(topicId, gradeBand);
