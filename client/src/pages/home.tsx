@@ -31,7 +31,7 @@ export default function Home() {
                 className="bg-accent hover:bg-accent/90 text-gray-900 font-bold py-4 px-8 text-lg"
                 onClick={() => setAccessCodeModalOpen(true)}
               >
-                Access Demo (2025)
+                Access Demo
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
