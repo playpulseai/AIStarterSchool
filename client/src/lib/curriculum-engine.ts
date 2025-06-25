@@ -167,7 +167,7 @@ export class CurriculumGenerator {
       ],
       'ai-art': [
         'Introduction to AI Art Tools',
-        'Basic Image Prompts',
+        'Creating Your First AI Artwork',
         'Style and Composition',
         'Advanced Art Techniques',
         'Creating Art Projects'

@@ -190,9 +190,29 @@ export async function generateCurriculumLesson(topicId: string, topicTitle: stri
           Step: ${stepNumber}/${totalSteps}
           Grade level: ${gradeRange}
           
+          ${topicId === 'ai-art' && stepNumber === 2 ? `
+          SPECIAL REQUIREMENT - Create "Creating Your First AI Artwork" lesson with this exact content structure:
+          
+          Title: "Creating Your First AI Artwork"
+          Description: "Learn to create digital artwork using DALL-E and DeepArt tools with effective prompting techniques"
+          Task: "Create your first piece of digital artwork using AI tools and experiment with prompt refinement techniques"
+          Prompt Suggestion: "A cat wearing a wizard hat casting spells in a library"
+          
+          The AI teacher should guide students through:
+          1. Choosing between DALL-E or DeepArt
+          2. Writing descriptive prompts (example: "A cat wearing a wizard hat casting spells in a library")
+          3. Experimenting with styles (Van Gogh, Picasso for DeepArt)
+          4. Refining prompts (vague vs detailed: "A mountain" vs "A snow-capped mountain under a starry night sky with a glowing moon")
+          5. Comprehension check: "How does changing prompt details change the AI-generated image?"
+          6. End with 3 quiz questions: 
+             - What are AI art tools used for?
+             - How can you make prompts more effective for detailed images?
+             - What did you learn about how AI interprets prompts?
+          ` : `
           Make this lesson progressive - building on previous lessons if step > 1.
           Include a hands-on task and a practical prompt example.
-          Keep language appropriate for grades ${gradeRange}.`
+          Keep language appropriate for grades ${gradeRange}.
+          `}`
         }
       ],
       max_tokens: 400,
@@ -202,6 +222,16 @@ export async function generateCurriculumLesson(topicId: string, topicTitle: stri
 
     const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
     
+    // Special override for AI Art Lesson 2
+    if (topicId === 'ai-art' && stepNumber === 2) {
+      return {
+        title: "Creating Your First AI Artwork",
+        description: "Learn to create digital artwork using DALL-E and DeepArt tools with effective prompting techniques",
+        task: "Create your first piece of digital artwork using AI tools and experiment with prompt refinement techniques",
+        promptSuggestion: "A cat wearing a wizard hat casting spells in a library"
+      };
+    }
+    
     return {
       title: result.title || `${topicTitle} - Lesson ${stepNumber}`,
       description: result.description || `Learn about ${topicTitle.toLowerCase()}`,
@@ -210,6 +240,17 @@ export async function generateCurriculumLesson(topicId: string, topicTitle: stri
     };
   } catch (error) {
     console.error('Failed to generate curriculum lesson:', error);
+    
+    // Special fallback for AI Art Lesson 2
+    if (topicId === 'ai-art' && stepNumber === 2) {
+      return {
+        title: "Creating Your First AI Artwork",
+        description: "Learn to create digital artwork using DALL-E and DeepArt tools with effective prompting techniques",
+        task: "Create your first piece of digital artwork using AI tools and experiment with prompt refinement techniques",
+        promptSuggestion: "A cat wearing a wizard hat casting spells in a library"
+      };
+    }
+    
     return {
       title: `${topicTitle} - Lesson ${stepNumber}`,
       description: `Learn about ${topicTitle.toLowerCase()}`,
