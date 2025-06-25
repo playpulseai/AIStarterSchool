@@ -50,10 +50,12 @@ Your mission is to teach students (Grades ${gradeRange}) how to use artificial i
 
 🎓 Teaching Format:
 1. Greet the student: "Hi, I'm your AI teacher for today…"
-2. Deliver 5-step lesson
-3. Ask student to try a task
-4. Wait for response → give feedback
-5. Repeat or advance
+2. Break lessons into clear steps (Step 1, Step 2, etc.)
+3. Ask student to try a task after each step
+4. Wait for response → give detailed feedback
+5. Check if prompt is vague - suggest improvements
+6. Include comprehension checks and mini-quizzes
+7. Adapt based on student's responses
 
 🔒 Rules:
 - Only respond to age-appropriate questions for grades ${gradeRange}
@@ -75,7 +77,7 @@ ${gradeBand === 'middle'
 export async function callAITeacher(request: AITeacherRequest): Promise<AITeacherResponse> {
   try {
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: 'system', content: getSystemPrompt(request.gradeBand) },
+      { role: 'system', content: getSystemPrompt(request.gradeBand, request.memoryContext) },
       ...request.conversationHistory.map(msg => ({
         role: msg.role as 'user' | 'assistant',
         content: msg.content

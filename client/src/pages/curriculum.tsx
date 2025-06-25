@@ -660,7 +660,7 @@ export default function Curriculum() {
 
         {/* Lesson Dialog */}
         <Dialog open={isLessonDialogOpen} onOpenChange={setIsLessonDialogOpen}>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             {currentLesson && selectedTopic && (
               <>
                 <DialogHeader>
@@ -720,7 +720,7 @@ export default function Curriculum() {
                       <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
                         <h4 className="font-semibold mb-3">AI Teacher Chat</h4>
                         
-                        <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
+                        <div className="space-y-3 max-h-80 overflow-y-auto mb-4">
                           {conversationHistory.map((message, index) => (
                             <div key={index} className={`flex ${message.role === 'student' ? 'justify-end' : 'justify-start'}`}>
                               <div className={`max-w-sm p-3 rounded-lg text-sm ${
