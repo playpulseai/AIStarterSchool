@@ -3,12 +3,13 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
-import { GetStartedModal } from './get-started-modal';
+import { AccessCodeModal } from './access-code-modal';
 
 export function Navigation() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [getStartedModalOpen, setGetStartedModalOpen] = useState(false);
+  const [accessCodeModalOpen, setAccessCodeModalOpen] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
   const { user, logout } = useAuth();
 
   const isActive = (path: string) => {
@@ -51,11 +52,11 @@ export function Navigation() {
             </Link>
             
             <Button 
-              onClick={() => setGetStartedModalOpen(true)}
+              onClick={() => setAccessCodeModalOpen(true)}
               className="bg-primary hover:bg-primary/90 text-white"
               size="sm"
             >
-              Get Started
+              Access Demo
             </Button>
           </div>
           
@@ -90,21 +91,22 @@ export function Navigation() {
               
               <Button 
                 onClick={() => { 
-                  setGetStartedModalOpen(true); 
+                  setAccessCodeModalOpen(true); 
                   setMobileMenuOpen(false); 
                 }}
                 className="w-full bg-primary hover:bg-primary/90 text-white font-medium"
               >
-                Get Started
+                Access Demo
               </Button>
             </div>
           </div>
         )}
       </div>
       
-      <GetStartedModal 
-        isOpen={getStartedModalOpen} 
-        onClose={() => setGetStartedModalOpen(false)} 
+      <AccessCodeModal 
+        isOpen={accessCodeModalOpen} 
+        onClose={() => setAccessCodeModalOpen(false)}
+        onSuccess={() => setHasAccess(true)}
       />
     </nav>
   );

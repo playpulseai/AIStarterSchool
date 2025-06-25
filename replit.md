@@ -138,6 +138,15 @@ AIStarter School is a modern full-stack web application built for AI-powered edu
 ✓ Complete separation from curriculum system - no badge unlocks or test progression
 ✓ Guardian, Logger, and Role Validator remain active for all playground interactions
 
+✓ Investor Demo Mode Implementation
+✓ Removed traditional login/signup routes and authentication flows
+✓ Implemented 4-digit access code gate system (demo code: 2025)
+✓ AccessCodeModal component with investor-focused messaging
+✓ Protected routes now check localStorage for demo access token
+✓ Navigation updated with "Access Demo" buttons instead of "Get Started"
+✓ Soft gate displays investor demo messaging for protected content
+✓ Clean separation between public marketing pages and demo platform access
+
 ✓ AI Teacher Chat System Finalization
 ✓ Fixed "AI is typing..." placeholder to show real OpenAI responses on lesson start
 ✓ Implemented live prompt evaluation with real-time feedback instead of static analysis

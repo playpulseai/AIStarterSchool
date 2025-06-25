@@ -11,8 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Home from "@/pages/home";
 import About from "@/pages/about";
 import Features from "@/pages/features";
-import Login from "@/pages/login";
-import Signup from "@/pages/signup";
+
 import Dashboard from "@/pages/dashboard";
 import Lessons from "@/pages/lessons";
 import Test from "@/pages/test";
@@ -35,31 +34,37 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // In demo mode, show soft gate instead of actual login
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center">
-      <div className="max-w-md mx-auto p-8 text-center">
-        <div className="w-16 h-16 primary-gradient rounded-lg flex items-center justify-center mx-auto mb-6">
-          <i className="fas fa-lock text-white text-xl"></i>
+  // Check if user has access via code gate
+  const hasAccess = localStorage.getItem('investorDemoAccess') === 'true';
+  
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center">
+        <div className="max-w-md mx-auto p-8 text-center">
+          <div className="w-16 h-16 primary-gradient rounded-lg flex items-center justify-center mx-auto mb-6">
+            <i className="fas fa-lock text-white text-xl"></i>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            Investor Demo Access Required
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            This section requires a 4-digit access code to view the platform demonstration. Please contact your representative for access.
+          </p>
+          <button 
+            onClick={() => window.history.back()}
+            className="w-full bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-lg font-medium transition-colors"
+          >
+            Go Back
+          </button>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+            Investor Demo Mode
+          </p>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Join AIStarter School
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Access to curriculum, lessons, and AI tools requires an account. Join thousands of students already learning AI skills!
-        </p>
-        <button 
-          onClick={() => window.history.back()}
-          className="w-full bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-lg font-medium transition-colors"
-        >
-          Get Started
-        </button>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-          Demo Mode: Authentication is simulated for preview
-        </p>
       </div>
-    </div>
-  );
+    );
+  }
+  
+  return <>{children}</>;
 }
 
 function Router() {
@@ -71,8 +76,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/about" component={About} />
           <Route path="/features" component={Features} />
-          <Route path="/login" component={Login} />
-          <Route path="/signup" component={Signup} />
+
           <Route path="/dashboard">
             <ProtectedRoute>
               <Dashboard />
