@@ -74,8 +74,8 @@ Your goal: build real AI fluency. Stay in teacher mode. Don't break character.
 
 Teaching style for ${gradeRange}:
 ${gradeBand === 'middle' 
-  ? '- Use simple, clear language\n- Focus on practical examples\n- Keep lessons interactive and fun\n- Use analogies kids can understand'
-  : '- Use more sophisticated vocabulary\n- Include technical concepts\n- Focus on real-world applications\n- Prepare for college/career readiness'
+  ? '- Use simple, clear language appropriate for ages 11-14\n- Focus on practical examples and games\n- Keep lessons interactive and fun with frequent engagement\n- Use analogies kids can understand (like comparing AI to a helpful robot friend)\n- Include hands-on activities and creative projects\n- Emphasize safety and basic digital citizenship'
+  : '- Use sophisticated vocabulary appropriate for ages 14-18\n- Include technical concepts and terminology\n- Focus on real-world applications and career preparation\n- Discuss advanced topics like machine learning algorithms\n- Prepare students for college-level computer science\n- Cover complex ethical implications and societal impact\n- Include coding concepts and technical implementation details'
 }`;
 }
 
@@ -198,20 +198,39 @@ export async function generateCurriculumLesson(topicId: string, topicTitle: stri
           Task: "Create your first piece of digital artwork using AI tools and experiment with prompt refinement techniques"
           Prompt Suggestion: "A cat wearing a wizard hat casting spells in a library"
           
-          The AI teacher should guide students through:
-          1. Choosing between DALL-E or DeepArt
-          2. Writing descriptive prompts (example: "A cat wearing a wizard hat casting spells in a library")
-          3. Experimenting with styles (Van Gogh, Picasso for DeepArt)
-          4. Refining prompts (vague vs detailed: "A mountain" vs "A snow-capped mountain under a starry night sky with a glowing moon")
-          5. Comprehension check: "How does changing prompt details change the AI-generated image?"
-          6. End with 3 quiz questions: 
-             - What are AI art tools used for?
-             - How can you make prompts more effective for detailed images?
-             - What did you learn about how AI interprets prompts?
+          GRADE-SPECIFIC ADAPTATIONS:
+          ${gradeBand === 'middle' ? `
+          For Grades 6-8:
+          - Use simple, encouraging language
+          - Focus on fun, creative examples
+          - Include step-by-step visual guides
+          - Emphasize creativity over technical precision
+          ` : `
+          For Grades 9-12:
+          - Include technical terminology
+          - Discuss image generation algorithms
+          - Cover advanced prompt engineering techniques
+          - Connect to graphic design and digital art careers
+          `}
           ` : `
           Make this lesson progressive - building on previous lessons if step > 1.
           Include a hands-on task and a practical prompt example.
-          Keep language appropriate for grades ${gradeRange}.
+          Keep language and complexity appropriate for grades ${gradeRange}.
+          
+          GRADE-SPECIFIC ADAPTATIONS:
+          ${gradeBand === 'middle' ? `
+          For Grades 6-8:
+          - Use simpler vocabulary and concepts
+          - Include more interactive elements and games
+          - Focus on practical applications they can relate to
+          - Use analogies to everyday objects
+          ` : `
+          For Grades 9-12:
+          - Include advanced concepts and technical details
+          - Cover industry applications and career connections
+          - Discuss ethical implications in depth
+          - Include coding and algorithmic thinking
+          `}
           `}`
         }
       ],

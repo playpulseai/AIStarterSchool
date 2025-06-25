@@ -54,11 +54,24 @@ export default function Curriculum() {
     loadProgressData();
   }, []);
 
+  // Reload progress data when grade band changes
+  useEffect(() => {
+    loadProgressData();
+  }, [gradeBand]);
+
   const loadProgressData = async () => {
     try {
       const userId = getUserId();
       const progress = await ProgressTracker.getAllTopicProgress(userId);
       setProgressData(progress);
+      
+      // Clear any active lesson state when grade band changes
+      setIsLessonDialogOpen(false);
+      setIsTestDialogOpen(false);
+      setCurrentLesson(null);
+      setSelectedTopic(null);
+      setConversationHistory([]);
+      setIsLessonActive(false);
     } catch (error) {
       console.error('Failed to load progress:', error);
     }
