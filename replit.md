@@ -358,6 +358,15 @@ Changelog:
   - Added dynamic grade level UI labels with difficulty and grade band badges
   - Connected curriculum to regulatory frameworks (EU AI Act, algorithmic auditing)
   - Enhanced session logging to track grade band in /lesson_sessions/{userId}/{gradeBand}/
+- June 27, 2025. Dashboard and Gallery Firebase integration, Legal pages implementation
+  - Rebuilt dashboard with live Firebase data connections and fixed logout functionality
+  - Completely rewrote gallery page for real user project management with Firebase integration
+  - Added personalized welcome messages and demo mode handling throughout platform
+  - Created comprehensive Terms of Service and Privacy Policy pages with data deletion instructions
+  - Added curriculum overview section to homepage showcasing 5 core AI topics
+  - Enhanced footer with legal page links and improved site navigation
+  - Fixed AI response duplication in lesson chat interface for clean conversation flow
+  - Implemented authentication guards and empty state guidance across all protected routes
 ```
 
 ## User Preferences
