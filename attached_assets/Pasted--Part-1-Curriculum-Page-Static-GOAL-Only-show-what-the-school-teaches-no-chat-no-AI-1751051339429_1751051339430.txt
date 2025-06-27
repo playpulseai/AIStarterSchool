@@ -1,0 +1,107 @@
+
+✅ Part 1: Curriculum Page (Static)
+🔥 GOAL:
+
+Only show what the school teaches — no chat, no AI, no buttons. Just a written, official AIStarter School Curriculum explaining the subject areas and what students will master.
+🧠 CURRICULUM PAGE TEXT (Full Written Curriculum Overview)
+🎓 AIStarter School Curriculum
+
+AIStarter School is dedicated to teaching middle and high school students how to understand, use, and think critically about artificial intelligence. Our curriculum is divided into five core subject areas, designed to grow both technical skill and ethical awareness.
+📘 1. Prompt Engineering
+
+Students learn how to craft effective prompts to guide AI behavior. From basic question phrasing to advanced chaining, students build strong communication skills with AI tools.
+
+Key topics:
+
+    What is a prompt?
+
+    Specificity and clarity
+
+    Role-based prompting
+
+    Instruction chaining
+
+🎨 2. AI Art and Creativity
+
+Using tools like DALL·E and DeepArt, students explore how AI can generate visual content. Lessons focus on visual storytelling, creative prompting, and style experimentation.
+
+Key topics:
+
+    Visual prompt design
+
+    Style transfer and AI art history
+
+    Generating portfolio-worthy images
+
+    Responsible use of AI-generated content
+
+🛠️ 3. Automation and AI Tools for Life
+
+Students learn how AI can support productivity, automate tasks, and assist in daily life. This includes voice assistants, planning tools, and custom AI workflows.
+
+Key topics:
+
+    Automation in school and home
+
+    How recommendation systems work
+
+    AI for note-taking, reminders, and scheduling
+
+    Creating your own basic automation with no-code tools
+
+🏛️ 4. AI Ethics and Responsible Use
+
+Students critically examine how AI systems can be biased, unfair, or misused — and how to prevent it. High school students explore real-world ethical cases.
+
+Key topics:
+
+    Algorithmic bias
+
+    Fairness and transparency
+
+    Privacy in AI systems
+
+    Real-world cases (e.g., COMPAS, hiring tools)
+
+🧠 5. Real-World AI Applications
+
+Older students (Grades 9–12) explore how AI is used across industries, from medicine to music. They learn to analyze, critique, and even design small AI-powered systems.
+
+Key topics:
+
+    AI in healthcare, finance, education, logistics
+
+    Case study analysis
+
+    Hands-on projects to apply concepts
+
+    Career exploration in AI
+
+🔒 Learning Paths
+
+    Grades 6–8: Foundational understanding, creative exploration, safe experimentation
+
+    Grades 9–12: Technical depth, real-world application, ethical reasoning
+
+Each path is powered by voice-ready AI agents, memory tracking, and fully interactive lessons.
+
+📍 Curriculum updated quarterly to stay aligned with industry trends and evolving AI capabilities.
+✅ Part 2: LESSONS
+
+Your /lessons route will contain:
+
+    Full AI-guided content (loaded from Firebase)
+
+    Dynamic content based on grade band
+
+    Markdown-rendered steps
+
+    Interactive chat
+
+    Comprehension checks
+
+    Quiz + memory feedback
+
+🔧 Replit Agent Prompt to Create Curriculum Page
+
+You can use this to generate the static curriculum page:

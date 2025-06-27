@@ -18,6 +18,7 @@ import Test from "@/pages/test";
 import Projects from "@/pages/projects";
 import Profile from "@/pages/profile";
 import Curriculum from "@/pages/curriculum";
+import CurriculumOverview from "@/pages/curriculum-overview";
 import Admin from "@/pages/admin";
 import Gallery from "@/pages/gallery";
 import Playground from "@/pages/playground";
@@ -106,6 +107,11 @@ function Router() {
           <Route path="/curriculum">
             <ProtectedRoute>
               <Curriculum />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/curriculum-overview">
+            <ProtectedRoute>
+              <CurriculumOverview />
             </ProtectedRoute>
           </Route>
           <Route path="/playground">
