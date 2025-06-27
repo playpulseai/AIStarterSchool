@@ -22,6 +22,8 @@ import CurriculumOverview from "@/pages/curriculum-overview";
 import Admin from "@/pages/admin";
 import Gallery from "@/pages/gallery";
 import Playground from "@/pages/playground";
+import Terms from "@/pages/terms";
+import Privacy from "@/pages/privacy";
 import NotFound from "@/pages/not-found";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -77,6 +79,8 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/about" component={About} />
           <Route path="/features" component={Features} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/privacy" component={Privacy} />
           <Route path="/gallery" component={Gallery} />
           
           <Route path="/dashboard">

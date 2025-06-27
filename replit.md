@@ -183,6 +183,16 @@ AIStarter School is a modern full-stack web application built for AI-powered edu
 ✓ Empty state guidance directing users to start lessons for progress tracking
 ✓ Responsive design with proper loading states and error handling
 
+✓ Homepage Curriculum Section & Legal Pages Implementation
+✓ Added "What We Teach at AIStarter School" section to homepage
+✓ Created 5 curriculum topic cards with descriptions and icons
+✓ Added "See Full Curriculum" button linking to /curriculum-overview
+✓ Created /terms route with comprehensive Terms of Service content
+✓ Created /privacy route with detailed Privacy & Data Policy
+✓ Added footer links to Terms of Service and Privacy Policy
+✓ Included data deletion instructions in privacy policy
+✓ All legal pages include proper navigation and responsive design
+
 ✓ AI Teacher Chat System Finalization
 ✓ Fixed "AI is typing..." placeholder to show real OpenAI responses on lesson start
 ✓ Implemented live prompt evaluation with real-time feedback instead of static analysis
