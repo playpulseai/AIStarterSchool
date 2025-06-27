@@ -75,12 +75,16 @@ export function AccessCodeModal({ isOpen, onClose, onSuccess }: AccessCodeModalP
             <Label htmlFor="access-code">Access Code</Label>
             <Input
               id="access-code"
-              type="text"
+              type="tel"
+              inputMode="numeric"
               value={code}
               onChange={handleCodeChange}
+              onFocus={(e) => e.target.select()}
               placeholder="Enter 4-digit code"
               className="mt-1 text-center text-2xl tracking-widest font-mono"
               maxLength={4}
+              autoComplete="off"
+              autoFocus
               required
             />
             {error && (
@@ -125,11 +129,7 @@ export function AccessCodeModal({ isOpen, onClose, onSuccess }: AccessCodeModalP
           </div>
         </div>
 
-        <div className="text-center mt-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Demo code: <span className="font-mono font-semibold">2025</span> (for demonstration purposes)
-          </p>
-        </div>
+
       </DialogContent>
     </Dialog>
   );
