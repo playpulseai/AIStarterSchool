@@ -1,0 +1,90 @@
+    ery page. Make it fully functional, not demo-mode or placeholder-based.
+
+🔧 TASK: Finalize the /gallery route for real student use
+
+1. Connect Gallery to Firebase using authenticated user ID:
+
+    Read data from:
+    firebase.firestore().collection('student_projects').doc(userId).collection('projects')
+
+    Each project should have:
+
+        title
+
+        type (e.g., "AI Art", "Fantasy Writing", "Prompt Response")
+
+        timestamp
+
+        thumbnail or short preview
+
+        content
+
+    If login is active, use auth.currentUser.uid
+
+    If in demo mode, show message: “No saved projects in demo mode.”
+
+2. Display student projects by type:
+
+    Group projects into sections:
+
+        🎨 AI Art Creation
+
+        ✍️ Fantasy World Generator
+
+        📝 AI Writing Projects
+
+        📚 Completed Lessons
+
+    For each card, show:
+
+        Title
+
+        Date created
+
+        Short preview (image or text snippet)
+
+        Type icon
+
+        Action buttons: View / Delete
+
+3. Empty State:
+
+    If no projects exist, show this message:
+
+        “No projects yet. Complete a lesson or explore the AI Playground to get started!”
+
+    Add optional CTA button: “Go to Playground” or “Start a Lesson”
+
+4. Remove All Placeholders:
+
+    No fake data
+
+    No “Sample Project” or lorem ipsum
+
+    All content should be 100% user-driven via Firebase
+
+5. Auto-refresh on login or after saving a project:
+
+    After a project is saved (from lesson or sandbox), it should appear in the gallery on page reload
+
+    If login changes, reload the Firebase query using new userId
+
+🔐 Security/Access:
+
+    Only show a student's own projects
+
+    Do not allow access to other users' galleries
+
+    If user is not logged in and not in demo mode, redirect to login or block access
+
+✅ When complete, test this flow:
+
+    Run a lesson or sandbox (e.g., Art Creator)
+
+    Save a project
+
+    Open /gallery
+
+    See correct user’s saved content grouped by type
+
+    Delete one and confirm it updates

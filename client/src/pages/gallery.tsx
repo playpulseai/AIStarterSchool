@@ -1,477 +1,428 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Eye, Heart, Calendar, Filter, Sparkles } from 'lucide-react';
-import { CURRICULUM_TOPICS } from '@/lib/curriculum-engine';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Eye, Trash2, Calendar, Palette, PenTool, BookOpen, Play, Sparkles, FolderOpen } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { getUserId } from '@/lib/safety-agents';
 
-interface PublicProject {
+interface StudentProject {
   id: string;
   title: string;
-  description: string;
   content: string;
-  type: 'chatbot' | 'image-gen' | 'writing' | 'productivity' | 'other';
-  topicId?: string;
-  studentAlias: string;
-  gradeBand: 'middle' | 'high';
-  publishedAt: Date;
-  likes: number;
-  tags: string[];
-  isApproved: boolean;
-  approvedBy?: string;
-  approvedAt?: Date;
+  type: 'ai-art' | 'writing' | 'lesson' | 'playground';
+  timestamp: Date;
+  thumbnail?: string;
+  preview?: string;
 }
 
-const PROJECT_TYPES = {
-  'chatbot': { label: 'AI Chatbot', icon: '🤖', color: 'bg-blue-500' },
-  'image-gen': { label: 'Image Generation', icon: '🎨', color: 'bg-purple-500' },
-  'writing': { label: 'AI Writing', icon: '✍️', color: 'bg-green-500' },
-  'productivity': { label: 'Productivity Tool', icon: '⚡', color: 'bg-orange-500' },
-  'other': { label: 'Other', icon: '📁', color: 'bg-gray-500' }
+interface ProjectsByType {
+  'ai-art': StudentProject[];
+  'writing': StudentProject[];
+  'lesson': StudentProject[];
+  'playground': StudentProject[];
+}
+
+const PROJECT_SECTIONS = {
+  'ai-art': { 
+    title: '🎨 AI Art Creation', 
+    icon: Palette, 
+    color: 'bg-purple-100 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800',
+    iconColor: 'text-purple-600 dark:text-purple-400'
+  },
+  'writing': { 
+    title: '✍️ Fantasy World Generator', 
+    icon: PenTool, 
+    color: 'bg-green-100 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+    iconColor: 'text-green-600 dark:text-green-400'
+  },
+  'lesson': { 
+    title: '📚 Completed Lessons', 
+    icon: BookOpen, 
+    color: 'bg-blue-100 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+    iconColor: 'text-blue-600 dark:text-blue-400'
+  },
+  'playground': { 
+    title: '🚀 AI Playground Projects', 
+    icon: Sparkles, 
+    color: 'bg-orange-100 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
+    iconColor: 'text-orange-600 dark:text-orange-400'
+  }
 };
 
 export default function Gallery() {
-  const [projects, setProjects] = useState<PublicProject[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<PublicProject[]>([]);
-  const [selectedProject, setSelectedProject] = useState<PublicProject | null>(null);
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [projectsByType, setProjectsByType] = useState<ProjectsByType>({
+    'ai-art': [],
+    'writing': [],
+    'lesson': [],
+    'playground': []
+  });
+  const [selectedProject, setSelectedProject] = useState<StudentProject | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [topicFilter, setTopicFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [gradeBandFilter, setGradeBandFilter] = useState('all');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<StudentProject | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
-    loadPublicProjects();
-  }, []);
+    loadUserProjects();
+  }, [user]);
 
-  useEffect(() => {
-    filterProjects();
-  }, [projects, searchQuery, topicFilter, typeFilter, gradeBandFilter]);
-
-  const loadPublicProjects = async () => {
+  const loadUserProjects = async () => {
+    setLoading(true);
     try {
-      // Mock data for demonstration - in real app would fetch from API
-      const mockProjects: PublicProject[] = [
-        {
-          id: 'pub-1',
-          title: 'Study Buddy AI',
-          description: 'An AI assistant that helps with homework and explains complex topics in simple terms.',
-          content: 'This chatbot was designed to help students understand difficult concepts by breaking them down into simpler explanations. It uses prompting techniques to ask clarifying questions and provide step-by-step guidance. The AI can help with math problems, science concepts, and essay writing by offering suggestions and feedback.',
-          type: 'chatbot',
-          topicId: 'prompting-basics',
-          studentAlias: 'TechExplorer',
-          gradeBand: 'middle',
-          publishedAt: new Date('2024-01-20'),
-          likes: 24,
-          tags: ['education', 'homework', 'study'],
-          isApproved: true,
-          approvedBy: 'admin@aistarter.school',
-          approvedAt: new Date('2024-01-21')
-        },
-        {
-          id: 'pub-2',
-          title: 'Fantasy World Generator',
-          description: 'AI-powered tool that creates detailed fantasy worlds for creative writing and storytelling.',
-          content: 'Using advanced prompting techniques, this tool generates rich fantasy settings complete with geography, cultures, and histories. Students can input basic parameters like climate and civilization type, and the AI creates comprehensive world-building details perfect for stories, games, or creative projects.',
-          type: 'writing',
-          topicId: 'ai-art',
-          studentAlias: 'StoryWeaver',
-          gradeBand: 'high',
-          publishedAt: new Date('2024-01-18'),
-          likes: 31,
-          tags: ['creative writing', 'fantasy', 'world building'],
-          isApproved: true,
-          approvedBy: 'teacher@aistarter.school',
-          approvedAt: new Date('2024-01-19')
-        },
-        {
-          id: 'pub-3',
-          title: 'Math Problem Visualizer',
-          description: 'Creates visual representations and step-by-step solutions for complex math problems.',
-          content: 'This productivity tool helps students understand mathematical concepts by generating visual aids and detailed explanations. It can break down algebra problems, geometry concepts, and calculus into digestible steps with helpful analogies.',
-          type: 'productivity',
-          topicId: 'ai-for-school',
-          studentAlias: 'MathWiz',
-          gradeBand: 'high',
-          publishedAt: new Date('2024-01-15'),
-          likes: 18,
-          tags: ['mathematics', 'visualization', 'education'],
-          isApproved: true,
-          approvedBy: 'admin@aistarter.school',
-          approvedAt: new Date('2024-01-16')
-        },
-        {
-          id: 'pub-4',
-          title: 'Creative Art Prompt Generator',
-          description: 'Generates detailed prompts for AI art tools with style and composition suggestions.',
-          content: 'This tool helps students create better AI-generated artwork by providing detailed, well-structured prompts. It includes guidance on artistic styles, color palettes, composition techniques, and lighting effects to achieve professional-looking results.',
-          type: 'image-gen',
-          topicId: 'ai-art',
-          studentAlias: 'DigitalArtist',
-          gradeBand: 'middle',
-          publishedAt: new Date('2024-01-12'),
-          likes: 27,
-          tags: ['art', 'creativity', 'prompting'],
-          isApproved: true,
-          approvedBy: 'teacher@aistarter.school',
-          approvedAt: new Date('2024-01-13')
-        }
-      ];
+      // Check if we're in demo mode (no Firebase authentication)
+      const hasAccess = localStorage.getItem('investorDemoAccess') === 'true';
+      if (!user && hasAccess) {
+        setIsDemoMode(true);
+        setLoading(false);
+        return;
+      }
 
-      setProjects(mockProjects);
-      setLoading(false);
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Get current user ID for Firebase query
+      const userId = getUserId();
+      
+      // In a real Firebase implementation, this would be:
+      // const projectsRef = firebase.firestore().collection('student_projects').doc(userId).collection('projects');
+      // const snapshot = await projectsRef.orderBy('timestamp', 'desc').get();
+      
+      // For now, simulate Firebase data structure
+      const mockProjects: StudentProject[] = [];
+      
+      // Group projects by type
+      const grouped: ProjectsByType = {
+        'ai-art': mockProjects.filter(p => p.type === 'ai-art'),
+        'writing': mockProjects.filter(p => p.type === 'writing'),
+        'lesson': mockProjects.filter(p => p.type === 'lesson'),
+        'playground': mockProjects.filter(p => p.type === 'playground')
+      };
+
+      setProjectsByType(grouped);
     } catch (error) {
-      console.error('Failed to load public projects:', error);
+      console.error('Error loading user projects:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load your projects. Please try again."
+      });
+    } finally {
       setLoading(false);
     }
   };
 
-  const filterProjects = () => {
-    let filtered = projects.filter(project => project.isApproved);
+  const deleteProject = async (project: StudentProject) => {
+    try {
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to delete projects."
+        });
+        return;
+      }
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(project =>
-        project.title.toLowerCase().includes(query) ||
-        project.description.toLowerCase().includes(query) ||
-        project.tags.some(tag => tag.toLowerCase().includes(query))
-      );
+      const userId = getUserId();
+      
+      // In a real Firebase implementation:
+      // await firebase.firestore().collection('student_projects')
+      //   .doc(userId).collection('projects').doc(project.id).delete();
+
+      // Update local state
+      setProjectsByType(prev => ({
+        ...prev,
+        [project.type]: prev[project.type].filter(p => p.id !== project.id)
+      }));
+
+      toast({
+        title: "Project Deleted",
+        description: `"${project.title}" has been removed from your gallery.`
+      });
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete project. Please try again."
+      });
     }
-
-    if (topicFilter !== 'all') {
-      filtered = filtered.filter(project => project.topicId === topicFilter);
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(project => project.type === typeFilter);
-    }
-
-    if (gradeBandFilter !== 'all') {
-      filtered = filtered.filter(project => project.gradeBand === gradeBandFilter);
-    }
-
-    // Sort by likes (most popular first)
-    filtered.sort((a, b) => b.likes - a.likes);
-
-    setFilteredProjects(filtered);
   };
 
-  const likeProject = async (projectId: string) => {
-    setProjects(prev => prev.map(project =>
-      project.id === projectId
-        ? { ...project, likes: project.likes + 1 }
-        : project
-    ));
-  };
-
-  const viewProject = (project: PublicProject) => {
+  const viewProject = (project: StudentProject) => {
     setSelectedProject(project);
     setIsViewDialogOpen(true);
   };
 
+  const confirmDelete = (project: StudentProject) => {
+    setProjectToDelete(project);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (projectToDelete) {
+      await deleteProject(projectToDelete);
+      setProjectToDelete(null);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const getTotalProjects = () => {
+    return Object.values(projectsByType).flat().length;
+  };
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(date);
+  };
+
+  const getPreviewText = (content: string, maxLength: number = 150) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading your projects...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isDemoMode) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-20">
+            <FolderOpen className="mx-auto h-16 w-16 text-gray-400 mb-6" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              No saved projects in demo mode
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              Projects are saved to your personal account. In demo mode, projects are not persisted.
+            </p>
+            <div className="space-x-4">
+              <Button onClick={() => setLocation('/playground')}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Go to AI Playground
+              </Button>
+              <Button variant="outline" onClick={() => setLocation('/curriculum')}>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Start a Lesson
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-20">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Login Required
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Please log in to view your project gallery.
+            </p>
+            <Button onClick={() => setLocation('/')}>
+              Go to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const totalProjects = getTotalProjects();
+
+  if (totalProjects === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-20">
+            <FolderOpen className="mx-auto h-16 w-16 text-gray-400 mb-6" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              No projects yet
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              Complete a lesson or explore the AI Playground to get started!
+            </p>
+            <div className="space-x-4">
+              <Button onClick={() => setLocation('/playground')}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Go to AI Playground
+              </Button>
+              <Button variant="outline" onClick={() => setLocation('/curriculum')}>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Start a Lesson
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center">
-            <Sparkles className="h-10 w-10 mr-3 text-primary" />
-            Student Gallery
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            My Project Gallery
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Discover amazing AI projects created by students. Get inspired and see what's possible with artificial intelligence!
+          <p className="text-gray-600 dark:text-gray-400">
+            {totalProjects} saved project{totalProjects !== 1 ? 's' : ''}
           </p>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Search Projects</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search by title, description, or tags..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+        {/* Project Sections */}
+        <div className="space-y-12">
+          {(Object.keys(PROJECT_SECTIONS) as Array<keyof ProjectsByType>).map((sectionType) => {
+            const section = PROJECT_SECTIONS[sectionType];
+            const projects = projectsByType[sectionType];
+            
+            if (projects.length === 0) return null;
+
+            return (
+              <div key={sectionType}>
+                <div className="flex items-center mb-6">
+                  <section.icon className={`h-6 w-6 mr-3 ${section.iconColor}`} />
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {section.title}
+                  </h2>
+                  <Badge variant="secondary" className="ml-3">
+                    {projects.length}
+                  </Badge>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Topic</label>
-                <Select value={topicFilter} onValueChange={setTopicFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Topics</SelectItem>
-                    {CURRICULUM_TOPICS.map(topic => (
-                      <SelectItem key={topic.id} value={topic.id}>
-                        {topic.icon} {topic.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Project Type</label>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    {Object.entries(PROJECT_TYPES).map(([key, type]) => (
-                      <SelectItem key={key} value={key}>
-                        {type.icon} {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Grade Level</label>
-                <Select value={gradeBandFilter} onValueChange={setGradeBandFilter}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Grades</SelectItem>
-                    <SelectItem value="middle">Grades 6-8</SelectItem>
-                    <SelectItem value="high">Grades 9-12</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">{filteredProjects.length}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Projects</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-success">
-                {filteredProjects.reduce((sum, project) => sum + project.likes, 0)}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Total Likes</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-accent">
-                {new Set(filteredProjects.map(p => p.studentAlias)).size}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Contributors</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-secondary">
-                {new Set(filteredProjects.map(p => p.topicId)).size}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Topics</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Projects Grid */}
-        {filteredProjects.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Sparkles className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No projects found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Try adjusting your filters or search terms to find more projects.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => {
-              const projectType = PROJECT_TYPES[project.type];
-              const topic = CURRICULUM_TOPICS.find(t => t.id === project.topicId);
-
-              return (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 ${projectType.color} rounded-lg flex items-center justify-center text-white text-lg`}>
-                          {projectType.icon}
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{project.title}</CardTitle>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Badge variant="outline">{projectType.label}</Badge>
-                            {topic && (
-                              <Badge variant="secondary">{topic.icon} {topic.title}</Badge>
-                            )}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {projects.map((project) => (
+                    <Card key={project.id} className={`hover:shadow-lg transition-shadow ${section.color}`}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-lg leading-tight">
+                            {project.title}
+                          </CardTitle>
+                          <div className="flex space-x-1 ml-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => viewProject(project)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => confirmDelete(project)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent>
-                    <CardDescription className="mb-4 line-clamp-3">
-                      {project.description}
-                    </CardDescription>
-
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {project.tags.slice(0, 3).map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {project.tags.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{project.tags.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      <div className="flex items-center space-x-2">
-                        <span>by {project.studentAlias}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {project.gradeBand === 'middle' ? 'Grades 6-8' : 'Grades 9-12'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{project.publishedAt.toLocaleDateString()}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => viewProject(project)}
-                        className="flex-1 mr-2"
-                      >
-                        <Eye className="mr-1 h-4 w-4" />
-                        View Project
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => likeProject(project.id)}
-                        className="flex items-center space-x-1"
-                      >
-                        <Heart className="h-4 w-4" />
-                        <span>{project.likes}</span>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Project View Dialog */}
-        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
-            {selectedProject && (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="flex items-center space-x-2">
-                    <div className={`w-8 h-8 ${PROJECT_TYPES[selectedProject.type].color} rounded-lg flex items-center justify-center text-white text-sm`}>
-                      {PROJECT_TYPES[selectedProject.type].icon}
-                    </div>
-                    <span>{selectedProject.title}</span>
-                  </DialogTitle>
-                  <DialogDescription>
-                    Created by {selectedProject.studentAlias} • {selectedProject.publishedAt.toLocaleDateString()}
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline">{PROJECT_TYPES[selectedProject.type].label}</Badge>
-                    {selectedProject.topicId && (
-                      <Badge variant="secondary">
-                        {CURRICULUM_TOPICS.find(t => t.id === selectedProject.topicId)?.icon}{' '}
-                        {CURRICULUM_TOPICS.find(t => t.id === selectedProject.topicId)?.title}
-                      </Badge>
-                    )}
-                    <Badge variant="outline">
-                      {selectedProject.gradeBand === 'middle' ? 'Grades 6-8' : 'Grades 9-12'}
-                    </Badge>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Description</h4>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {selectedProject.description}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Project Details</h4>
-                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {selectedProject.content}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Tags</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedProject.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                      <span>Created by {selectedProject.studentAlias}</span>
-                      <span>Published {selectedProject.publishedAt.toLocaleDateString()}</span>
-                    </div>
-                    <Button
-                      onClick={() => likeProject(selectedProject.id)}
-                      variant="outline"
-                      className="flex items-center space-x-2"
-                    >
-                      <Heart className="h-4 w-4" />
-                      <span>{selectedProject.likes} likes</span>
-                    </Button>
-                  </div>
+                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {formatDate(project.timestamp)}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {project.thumbnail && (
+                          <img 
+                            src={project.thumbnail} 
+                            alt={project.title}
+                            className="w-full h-32 object-cover rounded-md mb-3"
+                          />
+                        )}
+                        {project.preview && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                            {getPreviewText(project.preview)}
+                          </p>
+                        )}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => viewProject(project)}
+                          className="w-full"
+                        >
+                          <Eye className="mr-2 h-3 w-3" />
+                          View Project
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </>
-            )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* View Project Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Play className="mr-2 h-5 w-5" />
+                {selectedProject?.title}
+              </DialogTitle>
+              <DialogDescription>
+                Created on {selectedProject && formatDate(selectedProject.timestamp)}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              {selectedProject?.thumbnail && (
+                <img 
+                  src={selectedProject.thumbnail} 
+                  alt={selectedProject.title}
+                  className="w-full max-h-64 object-cover rounded-lg mb-4"
+                />
+              )}
+              <div className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                {selectedProject?.content}
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Project</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{projectToDelete?.title}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
