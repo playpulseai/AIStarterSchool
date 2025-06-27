@@ -77,11 +77,13 @@ export function AccessCodeModal({ isOpen, onClose, onSuccess }: AccessCodeModalP
               id="access-code"
               type="tel"
               inputMode="numeric"
+              pattern="[0-9]*"
               value={code}
               onChange={handleCodeChange}
               onFocus={(e) => e.target.select()}
               placeholder="Enter 4-digit code"
-              className="mt-1 text-center text-2xl tracking-widest font-mono"
+              className="mt-1 text-center text-2xl tracking-widest font-mono touch-manipulation"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
               maxLength={4}
               autoComplete="off"
               autoFocus
