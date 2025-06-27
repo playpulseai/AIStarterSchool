@@ -550,21 +550,6 @@ Type your answer below and let's begin this exciting lesson!`;
                       </div>
                     </div>
                   ))}
-                  
-                  {/* Current AI Response */}
-                  {aiResponse && (
-                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                      <div className="flex items-start space-x-2">
-                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                          <Volume2 className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900 dark:text-white mb-1">AI Teacher</div>
-                          <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{aiResponse}</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Student Response Input */}
